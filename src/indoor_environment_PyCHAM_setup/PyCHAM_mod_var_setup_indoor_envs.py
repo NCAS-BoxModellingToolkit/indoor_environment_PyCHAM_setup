@@ -1,7 +1,6 @@
 '''code to write the model inputs for simulations
 of particulate matter for indoor environments'''
-# the resulting model variables file and excel 
-# file containing the influx
+# the resulting excel file containing the influx
 # rates of certain chemicals in certain phases 
 # can be used as input to the CHemistry with
 # Aerosol Microphysics in Python (PyCHAM) model:
@@ -16,11 +15,13 @@ import ast
 import scipy.constants as si
 import math
 
-# user-defined variables start --------------------------------
-
-# set base path - to be used for prefixing other paths (where wanted)
-base_path = str('/Users/user/Library/CloudStorage/' +
+# set base path, depending on operating system
+if 'Darwin' in platform.system() or 'Linux' in platform.system():
+	base_path = str('/Users/user/Library/CloudStorage/' +
 			'OneDrive-TheUniversityofManchester')
+if 'Win' in platform.system() or 'Linux' in platform.system():
+	base_path = 'C:/Users/Psymo/OneDrive - The University of Manchester'
+
 
 # path to folder where model variable and continuous influx inputs will be saved
 path_there = str(base_path + '/INGENIOUS/Papers/' +
@@ -40,15 +41,29 @@ xml_name = str(base_path + '/INGENIOUS/Papers/' +
 res_path = str(base_path + '/INGENIOUS/Papers/' +
 		'simulated_PM_mass_versus_observation/PyCHAM_out/')
 
-
-# the volume (cm3) of the envelope that emissions are released into
+# the volume (cm^3) of the envelope that emissions are released into
 # and therefore diluted
 env_vol = (5.e2*6.e2*6.e2)
 
-# user-defined variables end --------------------------------
+# path to emission rates from indoor activities
+ind_emi_path = str('/Users/user/Documents/GitHub/' +
+		'NCAS-BoxModellingToolkit/' +
+		'indoor_environment_PyCHAM_setup/src' +
+		'/indoor_environment_PyCHAM_setup/' +
+		'indoor_emi_pri_org_VBS.xlsx')
+
+# path to directory containing outdoor concentrations
+outd_dir_basic = str(base_path + '/INGENIOUS/' +
+	'Meetings/EAC2024/met_data/spun_up_out_conc/')
+
+# outdoor concentration names (first letter for season (s for summer), 
+# second for meterological condition (g for stagnant and dry), third 
+# for location (r for rural))
+oc_rn = ['swu']
 
 # define function
-def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
+def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path, 
+	ind_emi_path, outd_dir_basic, oc_rn):
 
 	# function creates the model variable input file
 	# for home simulations for PyCHAM for the INGENIOUS
@@ -68,7 +83,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 	# molar volume can be estimated, and this is
 	# combined with total volume to estimate rate of
 	# influx of molecular concentrations of components 
-	# (molecules/cm3/s)
+	# (molecules/cm^3/s)
 
 	# inputs: ----------------------
 	# path_there - path to save model variable files to
@@ -76,15 +91,19 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 	# xml_name - path to xml file to use
 	# res_path - path to results folder
 	# base_path - path to INGENIOUS folder
+	# ind_emi_path - path to emission rates from indoor activities
+	# outd_dir_basic - path to outdoor concentrations
+	# oc_rn - code for meteorological condition
 	# ------------------------------
 
-	# set range for air change rate (for maximum:
+	# set air change rate (for maximum:
 	# https://www.vent-axia.com/sites/default/files/
 	# 2023-11/97ee4be4-7c33-4f0d-a775-5b8c83ab1f5e.pdf)
-	acr_range = [1.]
+	# to align with air change rate times (acr_times variables)
+	acr_range = [1., 2., 4., 1.]
 
 	# set time for acr (s through simulation)
-	acr_times = np.array((0.)).reshape(1)
+	acr_times = np.array((0., 28800.0, 64200.0, 68400.0)).reshape(-1)
 
 	# note that inside photolysisRates is a prescribed
 	# wavelength-dependent transmission factor
@@ -103,47 +122,54 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 
 	# set activity frequency
 	mop_freqs = [0]
-	fry_freqs = [0]
+	fry_freqs = [1]
 	dust_freqs = [0]
-	bath_freqs = [0]
-	pcp_freqs = [0]
-	frag_freqs = [0]
+	bath_freqs = [2]
+	pcp_freqs = [2]
+	frag_freqs = [25]
 	wbs_freqs = [0]
+	vac_freqs = [2]
+	cls_freqs = [2]
+	smo_freqs = [2]
 
 	# set activity start times (hours through day)
 	mop_times = []
-	fry_times = []
+	fry_times = [14]
 	dust_times = []
-	bath_times = []
-	pcp_times = []
-	frag_times = []
+	bath_times = [9., 19.]
+	pcp_times = [8., 16.]
+	frag_times = [8., 8.1, 8.2, 8.3, 8.4, 9.0, 9.1, 9.2, 9.3, 9.4, 9.75, 9.85, 9.95, 10.5, 10.6, 10.7, 10.8, 10.9, 11.0, 16.0, 16.1, 16.2, 16.3, 16.4, 16.5]
 	wbs_times = []
+	vac_times = [9.5, 11.]
+	cls_times = [10.5, 16.]
+	smo_times = [11.17, 15.]
 
 	# set activity duration (hours taken)
 	mop_dur = 0.33
-	fry_dur = 0.33
+	fry_dur = 0.5
 	dust_dur = 0.33
-	bath_dur = 0.25
+	bath_dur = 0.33
 	# 1 second, which, when combined with the emission rate for 
 	# the activity, gives a body spray total mass equivalent of 
 	# 1.5 g (which is typical of a spraying session, as 
 	# detailed in the corresponding column header of 
 	# indoor_emi_pri_org_VBS)
 	pcp_dur = 2.78e-4
-	frag_dur = 1.
+	frag_dur = 0.1
 	wbs_dur = 1.5
-
-	# outdoor concentration names (first letter for season (s for summer), 
-	# second for meterological condition (g for stagnant and dry), third 
-	# for location (r for rural))
-	oc_rn = ['sgu']
+	vac_dur = 0.5
+	# 1 second, which, when combined with the emission rate for 
+	# the activity, gives a spray total mass equivalent of 
+	# 1.6 g (which is typical of a spraying session, as 
+	# detailed in the corresponding column header of 
+	# indoor_emi_pri_org_VBS)
+	cls_dur = 2.78e-4
+	smo_dur = 1.
 
 	# loading emission rates from indoor activities start ------------
 	# get the names of all components with influx from
 	# indoor activity
-	wb = openpyxl.load_workbook(filename = str(base_path + 
-		'/INGENIOUS/mod_var_setup/' +
-		'indoor_emi_pri_org_VBS.xlsx'))
+	wb = openpyxl.load_workbook(filename = ind_emi_path)
 
 	# get active sheet
 	sheet = wb['indoor_emi']
@@ -198,7 +224,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 					comp_inf_col_head.append('non')
 				if 'igarette' in col_head:
 					comp_inf_col_indx.append(ic)
-					comp_inf_col_head.append('cigs')
+					comp_inf_col_head.append('smo')
 				if 'Frying' in col_head or 'frying' in col_head:
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('fry')
@@ -217,6 +243,15 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 				if 'pcp' in col_head:
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('pcp')
+				if 'acuum' in col_head:
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('vac')
+				if 'leaning spray' in col_head:
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('cls')
+				if 'ir freshener' in col_head:
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('frag')
 			continue # onto next row
 		
 		if (inf_col == 1):
@@ -236,13 +271,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 			ind_emi_val[-1, :] = np.array((i))[comp_inf_col_indx]
 
 	# loading emission rates from indoor activities end --------------
-	
-	# estimate total number of simulations
-	num_sim = (len(acr_range)*len(tf_list)*len(mop_freqs)*len(fry_freqs)*
-		len(bath_freqs)*len(pcp_freqs)*len(wbs_freqs))
 
 	# loop through simulations
-	for simi in range(num_sim):
+	for simi in range(1):
 
 		# initiate results folder name
 		res_nam = ''
@@ -254,7 +285,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 		res_nam = str(res_nam + oci + '_')
 	
 		# set air change rate
-		acr = np.array((acr_range[0])).reshape(1)
+		acr = np.array((acr_range)).reshape(-1)
 
 		# update results name
 		res_nam = str(res_nam + str(acr[0]) + 'acr_')
@@ -344,10 +375,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 		lines.append(str('space_mode = man' + '\n'))
 		lines.append(str('lower_part_size = 9.e-4, 1.25, 10.' + '\n'))
 		lines.append(str('upper_part_size = 10.' + '\n'))
-		lines.append(str('vol_Comp = bc, AMM_SUL, pri_org, ' +
+		lines.append(str('vol_Comp = BZK_ind, SiO2_ind, bc, AMM_SUL, pri_org, ' +
 		'sec_org-2, sec_org-1, sec_org0, sec_org1, bcin, ' +
 		'pri_orgin, NO2_wall1, O3_wall1' + '\n'))
-		lines.append(str('volP = 0.0, 0.0, 0.0, 8.12e-16, 9.75e-12, '+
+		lines.append(str('volP = 0., 0., 0.0, 0.0, 0.0, 8.12e-16, 9.75e-12, '+
 		'1.22e-7, 1.62e-4, 0., 0., 0., 0.' + '\n'))
 		lines.append(str('nonHOMs_vp_method = EVAPORATION\n'))
 		lines.append(str('HOMs_vp_method = EVAPORATION\n'))
@@ -407,7 +438,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 		
 		# activity times and type matrix (activities in rows and times
 		# (every 5 minutes in columns))
-		act_matrix_act_order = np.array(('mop', 'fry', 'sho', 'pcp', 'wst'))
+		mop_times = []
+		act_matrix_act_order = np.array(('mop', 'fry', 'sho', 'pcp', 'wst', 
+			'vac', 'cls', 'frag', 'smo'))
 		act_matrix = np.zeros((len(act_matrix_act_order)+1, int((24*3600)/300)))
 		act_matrix[0, :] = np.arange(0., (24.*3600.), 300.)
 		
@@ -436,12 +469,24 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 			wbs_ti = (all_times_hr >= wbsi)*(all_times_hr < wbsi+wbs_dur)
 			act_matrix[5, :][wbs_ti] = 1
 
+		for vaci in vac_times[0:vac_freqs[0]]: # loop through times
+			vac_ti = (all_times_hr >= vaci)*(all_times_hr < vaci+vac_dur)
+			act_matrix[6, :][vac_ti] = 1
+
+		for clsi in cls_times[0:cls_freqs[0]]: # loop through times
+			cls_ti = (all_times_hr >= clsi)*(all_times_hr < clsi+cls_dur)
+			act_matrix[7, :][cls_ti] = 1
+
+		for fragi in frag_times[0:frag_freqs[0]]: # loop through times
+			frag_ti = (all_times_hr >= fragi)*(all_times_hr < fragi+frag_dur)
+			act_matrix[8, :][frag_ti] = 1
+
+		for smoi in smo_times[0:smo_freqs[0]]: # loop through times
+			smo_ti = (all_times_hr >= smoi)*(all_times_hr < smoi+smo_dur)
+			act_matrix[9, :][smo_ti] = 1
+
 		# file name
 		outd_dir_name = str('outprep_' + oci)
-
-		# path to directory containing outdoor concentrations
-		outd_dir_basic = str(base_path + '/INGENIOUS/'+
-		'Meetings/EAC2024/PyCHAM_inputs/outd_concs/')
 
 		# set path to directory
 		outd_dir = str(outd_dir_basic + outd_dir_name)
@@ -511,7 +556,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 		'/nudged_concentrations_all_components_all_times_gas_particle_wall')
 		y = np.loadtxt(fname, delimiter=',', skiprows=1)
 
-		# convert gas-phase concentrations from ppb to molecules/cm3
+		# convert gas-phase concentrations from ppb to molecules/cm^3
 		y[:, 0:nc] = y[:, 0:nc]*(np.array((Cfactor)).reshape(-1, 1))
 
 		# get number of particle size bins, remembering to subtract
@@ -669,6 +714,17 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 						comp_names.index(ind_compi[0:-2])])
 						prop_list.append(ind_compi)
 
+				# if indoor component not in outdoor components
+				if (ind_compi not in comp_names and 
+					ind_compi[0:-2] not in comp_names and 
+					ind_compi not in prop_list):
+						
+					if 'BZK' in ind_compi:
+						y_dens_ind.append(0.8613842553191489)
+						y_MM_ind.append(368.03928)
+					
+					prop_list.append(ind_compi)
+
 				# first addition of component to pm_indx (further
 				# additions possible below)
 				if (len(pm_suffix) == 1):
@@ -702,6 +758,8 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 			ind_comp_indx.append(comp_names.index(ind_compi))
 			# also remember index relative to just indoor components
 			ind_emi_val_g_indx.append(ind_cnt)
+		
+
 
 		# ensure integer type
 		pm_indx = pm_indx.astype('int')
@@ -1029,7 +1087,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 			# activities in columns
 			seedx_in_sbi = ind_emi_sbi
 			# arithmetic mean density and molar mass 
-			# of indoor particles (g/cm3) for each activity, 
+			# of indoor particles (g/cm^3) for each activity, 
 			# note components are in rows and activities are in
 			# columns
 			in_dens = np.sum(seedx_in_sbi*np.array((
@@ -1140,7 +1198,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 			# prepare to hold indices of activities happening now, in 
 			# preparation for particle-phase part
 			all_ind_act_indx = []
-
+			
 			# loop through activities happening now to get continuous
 			# influx of gases from indoor activities (molecules/cm3/s)
 			for acti in act_types_now:
@@ -1336,4 +1394,5 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path):
 	return()
 
 # call function
-mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path)
+mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path, 
+	ind_emi_path, outd_dir_basic, oc_rn)
