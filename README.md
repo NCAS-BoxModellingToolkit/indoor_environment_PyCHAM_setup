@@ -5,4 +5,4 @@ This computer algorithm creates the input files required for the CHemistry with 
 
 The src/package layout is explained [here](https://www.pyopensci.org/python-package-guide/package-structure-code/python-package-structure.html)
 
-Version 1.0.1
+Version 1.0.3

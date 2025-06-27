@@ -44,6 +44,7 @@ res_path = str(base_path + '/INGENIOUS/Papers/' +
 # the volume (cm^3) of the envelope that emissions are released into
 # and therefore diluted
 env_vol = (5.e2*6.e2*6.e2)
+env_vol = 2.9e8
 
 # path to emission rates from indoor activities
 ind_emi_path = str('/Users/user/Documents/GitHub/' +
@@ -96,11 +97,17 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# oc_rn - code for meteorological condition
 	# ------------------------------
 
+	# set number of particle size bins
+	nsb_user = 3
+
+	# set radius bounds of size bins
+	lps = [9.e-4, 8.e-2, 1.25, 10.]
+
 	# set air change rate (for maximum:
 	# https://www.vent-axia.com/sites/default/files/
 	# 2023-11/97ee4be4-7c33-4f0d-a775-5b8c83ab1f5e.pdf)
 	# to align with air change rate times (acr_times variables)
-	acr_range = [1., 2., 4., 1.]
+	acr_range = [0.7, 1., 4., 0.7]
 
 	# set time for acr (s through simulation)
 	acr_times = np.array((0., 28800.0, 64200.0, 68400.0)).reshape(-1)
@@ -134,7 +141,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 	# set activity start times (hours through day)
 	mop_times = []
-	fry_times = [14]
+	fry_times = [14.]
 	dust_times = []
 	bath_times = [9., 19.]
 	pcp_times = [8., 16.]
@@ -164,7 +171,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# detailed in the corresponding column header of 
 	# indoor_emi_pri_org_VBS)
 	cls_dur = 2.78e-4
-	smo_dur = 1.
+	smo_dur = 0.16
 
 	# loading emission rates from indoor activities start ------------
 	# get the names of all components with influx from
@@ -319,7 +326,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# set wood burning stove frequency
 		wbs_freq = wbs_freqs[0]
 		# update results name
-		res_nam = str(res_nam + str(wbs_freq) + 'wst')
+		res_nam = str(res_nam + str(wbs_freq) + 'wst_thirdtry')
 
 		# setting parameter values ends --------------------
 
@@ -369,17 +376,20 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('light_status = ' + light_status + '\n'))
 		lines.append(str('trans_fac = ' + tf_str + '\n'))
 		lines.append(str('p_init = ' + '101300' + '\n'))
-		lines.append(str('number_size_bins = ' + '2' + '\n'))
+		lines.append(str('number_size_bins = ' + str(nsb_user) + '\n'))
 		lines.append(str('Vwat_inc = 0' + '\n'))
 		lines.append(str('seed_eq_wat = 0' + '\n'))
 		lines.append(str('space_mode = man' + '\n'))
-		lines.append(str('lower_part_size = 9.e-4, 1.25, 10.' + '\n'))
+		lines.append(str('lower_part_size = ' + 
+			str(lps).replace('[', '').replace(']', '') + '\n'))
 		lines.append(str('upper_part_size = 10.' + '\n'))
 		lines.append(str('vol_Comp = BZK_ind, SiO2_ind, bc, AMM_SUL, pri_org, ' +
-		'sec_org-2, sec_org-1, sec_org0, sec_org1, bcin, ' +
+		'sec_org-2, sec_org-1, sec_org0, sec_org1, CO25C6CHO, ' +
+		'NLIMOOH, C1213OH, PNNCATCOOH, bcin, ' +
 		'pri_orgin, NO2_wall1, O3_wall1' + '\n'))
 		lines.append(str('volP = 0., 0., 0.0, 0.0, 0.0, 8.12e-16, 9.75e-12, '+
-		'1.22e-7, 1.62e-4, 0., 0., 0., 0.' + '\n'))
+		'1.22e-7, 1.62e-4, 1.62e-4, 1.22e-7, 9.75e-12, 8.12e-16, '+
+		'0., 0., 0., 0.' + '\n'))
 		lines.append(str('nonHOMs_vp_method = EVAPORATION\n'))
 		lines.append(str('HOMs_vp_method = EVAPORATION\n'))
 		lines.append(str('inorg_part_flag = 1\n'))
@@ -387,11 +397,8 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			', &, , [, :, }, ;,' + '\n'))
 		lines.append(str('chem_sch_name = ' +  chem_sch_name + '\n'))
 		lines.append(str('xml_name = ' +  xml_name + '\n'))
-		# only do spin_up for first simulation
-		if (simi == 0):
-			lines.append(str('spin_up = ' + '2' + '\n'))
-		else:
-			lines.append(str('C0 = ' + res_nam_orig + '\n'))
+		lines.append(str('spin_up = ' + '2' + '\n'))
+		lines.append(str('C0 = ' + res_nam_orig + '\n'))
 		lines.append(str('pars_skip = 0' + '\n'))
 		lines.append(str('dil_fac = ' + str(acr).replace(
 		'\n', '').replace('[', '').replace(']', '').replace(
@@ -559,10 +566,27 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# convert gas-phase concentrations from ppb to molecules/cm^3
 		y[:, 0:nc] = y[:, 0:nc]*(np.array((Cfactor)).reshape(-1, 1))
 
-		# get number of particle size bins, remembering to subtract
-		# the gas phase
+		# get number of particle size bins outdoors
 		nsb = int(x.shape[1])
 
+		# if user wants more size bins than was present in outdoor simulation,
+		# create dummy entries for additional size bins for outdoors
+		if (nsb_user > nsb):
+		
+			# isolate particle-phase concentrations
+			yp = y[:, nc::]
+
+			for exi in range(nsb_user-nsb):
+				# dummy radius of particles
+				x = np.concatenate((np.zeros((x.shape[0], 1)), x), axis=1)
+				# dummy component concentrations
+				yp = np.concatenate((np.zeros((yp.shape[0], nc)), yp), axis=1)
+
+			# concatenate updated particle phases to gas-phase
+			y = np.concatenate((y[:, 0:nc], yp), axis=1)
+
+			# update number of size bins
+			nsb = nsb_user
 
 		# in case you want to see SOPM mass fraction outdoors
 		# prepare array for holding indices of SOPM components
@@ -581,12 +605,16 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		seedx_out = np.zeros((len(t_array), nc0*nsb))
 
 		# get particle-phase mole fractions of outdoor components 
-		# at all 
-		# times per size bin and ensure they sum to 1
+		# at all times per size bin and ensure they sum to 1
 		for i in range(0, nsb):
-			seedx_out[:, nc0*i:nc0*(i+1)] = y[:, nc0*(i+1):nc0*(i+2)]/(
-				np.sum(y[:, nc0*(i+1):nc0*(i+2)], axis=1).reshape(-1, 1))
 
+			# if this size bin is empty
+			if (np.sum(np.sum(y[:, nc0*(i+1):nc0*(i+2)], axis=1)) == 0):
+				seedx_out[:, nc0*i:nc0*(i+1)] = 0.
+			else:
+				seedx_out[:, nc0*i:nc0*(i+1)] = y[:, nc0*(i+1):nc0*(i+2)]/(
+				np.sum(y[:, nc0*(i+1):nc0*(i+2)], axis=1).reshape(-1, 1))
+			
 			# in case you want to see SOPM mass fraction outdoors
 			# estimate and print out the mass fraction of outdoor PM2.5
 			# that is SOPM
@@ -609,7 +637,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				#print(str('outdoor mass fraction of PM2.5 that ' + 
 				#'is SOPM averaged over time: ' + str(mass_frac_SOPM)))
 
-		# isolate just gas-phase concentrations (molecules/cm3)
+		# isolate just gas-phase concentrations (molecules/cm^3)
 		y_g = y[:, 0:nc]
 
 		# zero the concentration of H2O, as this set inside PyCHAM
@@ -621,8 +649,16 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		Nwet = np.loadtxt(fname, delimiter=',', skiprows=1)
 		if (nsb == 1): # if just one size bin, ensure two dimensions
 			Nwet = Nwet.reshape(-1, 1)
+		
+		# if user wants more size bins than was present in outdoor simulation,
+		# create dummy entries for additional size bins for outdoors
+		if (x.shape[1] > Nwet.shape[1]):
 
-
+			for exi in range(x.shape[1]-Nwet.shape[1]):
+				# dummy particle number concentration
+				Nwet = np.concatenate((np.zeros((Nwet.shape[0], 1)), Nwet),
+					axis=1)
+		
 		# generate an array with air change rates aligned with
 		# outdoor concentration times (/s)
 		acr_t_array = np.zeros((len(t_array)))
@@ -939,11 +975,12 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					
 				# the indoor emitted particle number concentration rate 
 				# in this
-				# size bin (particles/cm3/s) per activity, 
+				# size bin (particles/cm^3/s) per activity, 
 				# note that the particle
 				# number concentration is divided by the total volume of the
-				# envelope (cm3) (e.g. household) to convert from particles/s to
-				# particles/cm3/s, i.e. accounting for dilution throughout
+				# envelope (cm^3) (e.g. household) to convert from 
+				# particles/s to
+				# particles/cm^3/s, i.e. accounting for dilution throughout
 				# the envelope 
 				if 'pconc' in ind_comp_now:
 					ind_N_sbi = np.array((
@@ -1037,6 +1074,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			# to influx rate of outdoor particles 
 			# (particles/cm3/s)
 			Nwet_sbi = Nwet[:, sbi]*acr_t_array
+			
 			# store outdoor particle number concentration
 			# influx rate, with times in rows and size 
 			# bins in columns
@@ -1058,6 +1096,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			# total outdoor volume of influxed particles in this size bin
 			# um3/s, times in rows
 			tot_v_out_sbi[:, sbi] = ((4./3.)*np.pi*(x_out**3.*Nwet_out))[:, 0]
+			
 			# total indoor volume of influxed particles in this size bin
 			# um3/s, activites in columns
 			tot_v_in_sbi[sbi, :] = (4./3.)*np.pi*(ind_x_sbi**3.*ind_N_sbi)
@@ -1065,15 +1104,20 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			# outdoor seed component mole fractions 
 			# in this size bin at all times
 			seedx_out_sbi = seedx_out[:, nc0*sbi:nc0*(sbi+1)]
-		
-			# arithmetic mean density of outdoor particles (g/cm3)
+			
+			# arithmetic mean density of outdoor particles (g/cm^3)
 			out_dens = np.sum(seedx_out_sbi[:, 0:nc0]*dens.reshape(1, -1), axis=1)
 			# arithmetic mean molar mass of outdoor particles (g/mol)
 			out_MM = np.sum(seedx_out_sbi[:, 0:nc0]*y_MM.reshape(1, -1), axis=1)
 			# arithmetic mean molar volume of outdoor particles (um3/molecules)
 			# note 1e12 converts cm3 to um3 and /Avogadro's constant converts
 			# mol to molecules
-			out_MV = (out_dens/out_MM)*1e12/si.N_A
+			# if no components present in this size bin at certain times 
+			# outdoors, then provide dummy value
+			out_MV = np.ones((out_MM.shape))
+			# non-zero index
+			nzi = out_MM != 0.
+			out_MV[nzi] = (out_dens[nzi]/out_MM[nzi])*1e12/si.N_A
 
 			# total (summed across components) particle-phase 
 			# molecular concentration influxing indoors
@@ -1081,7 +1125,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			# in this size bin (columns) at all times (rows)
 			tot_pp_out[:, sbi] = np.squeeze(
 				tot_v_out_sbi[:, sbi].reshape(-1, 1)/out_MV.reshape(-1, 1))
-
+			
 			# indoor seed component mole fractions 
 			# in this size bin, components in rows
 			# activities in columns
@@ -1209,11 +1253,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				# store indicies of activities happening now
 				all_ind_act_indx.append(act_indx)
 	
-				# indoor influx rate of gas-phase components (molecules/cm3/s)
+				# indoor influx rate of gas-phase components (molecules/cm^3/s)
 				# from indoor activities (summing within this loop across 
 				# activities), note that the divide by the volume of the 
-				# envelope being emitted into (cm3) and therefore diluted
-				# by, converts units from molecules/s to molecules/cm3/s
+				# envelope being emitted into (cm^3) and therefore diluted
+				# by, converts units from molecules/s to molecules/cm^3/s
 				cont_infl[1::, ti][ind_comp_indx] += ind_emi_val[
 					ind_emi_val_g_indx, act_indx]/env_vol
 
@@ -1260,6 +1304,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				sum_tot_mol_inf_now = np.sum(tot_mol_inf_now, axis=0)
 
 				# mole fractions of particle-phase component from outdoors
+				# first prevent division by zero
+				zeroi = (sum_tot_mol_inf_now == 0)
+				sum_tot_mol_inf_now[zeroi] = 1.
 				mf_pp_out = tot_pp_out[octi, sbi]/sum_tot_mol_inf_now
 
 				# mole fractions of particle-phase components from individual
@@ -1308,7 +1355,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			
 				# arithmetic mean molar volume (cm3/mol) for influxes
 				# from all sources in this size bin at this time
-				MV_all = MM_all/dens_all
+				if (dens_all == 0.):
+					MV_all = 0.
+				else:
+					MV_all = MM_all/dens_all
 			
 				# convert molar volume from cm3/mol to um3/molecule
 				MV_all = MV_all*1.e12/si.N_A
@@ -1351,7 +1401,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					octi, sbi]+sum(tot_v_ind_sbi_now)
 
 				# radius of this single particle assuming spherical shape (um)
-				rad = ((tot_v_all_sbi_now/pconc_sum)*(3./4.)/np.pi)**(1./3.)
+				if (pconc_sum == 0.):
+					rad = lps[sbi] + (lps[sbi+1]-lps[sbi])/2.
+				else:
+					rad = ((tot_v_all_sbi_now/pconc_sum)*(3./4.)/
+						np.pi)**(1./3.)
 				# record
 				cont_infl[cont_infl_index_mean_rad[sbi], ti] = rad
 
