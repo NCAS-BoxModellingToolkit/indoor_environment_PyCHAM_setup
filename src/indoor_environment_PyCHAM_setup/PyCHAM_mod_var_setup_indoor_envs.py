@@ -1,5 +1,5 @@
 '''code to write the model inputs for simulations
-of particulate matter for indoor environments'''
+of indoor environments'''
 # the resulting excel file containing the influx
 # rates of certain chemicals in certain phases 
 # can be used as input to the CHemistry with
@@ -54,17 +54,15 @@ ind_emi_path = str('/Users/user/Documents/GitHub/' +
 		'indoor_emi_pri_org_VBS.xlsx')
 
 # path to directory containing outdoor concentrations
-outd_dir_basic = str(base_path + '/INGENIOUS/' +
-	'Meetings/EAC2024/met_data/spun_up_out_conc/')
-
-# outdoor concentration names (first letter for season (s for summer), 
-# second for meterological condition (g for stagnant and dry), third 
-# for location (r for rural))
-oc_rn = ['swu']
+outd_dir_basic = str('/Users/user/Library/CloudStorage' +
+		'/OneDrive-TheUniversityofManchester/' +
+		'GitHub/NCAS-BoxModellingToolkit/' +
+		'indoor_environment_PyCHAM_setup/src/' +
+		'indoor_environment_PyCHAM_setup/')
 
 # define function
 def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path, 
-	ind_emi_path, outd_dir_basic, oc_rn):
+	ind_emi_path, outd_dir_basic):
 
 	# function creates the model variable input file
 	# for home simulations for PyCHAM for the INGENIOUS
@@ -94,7 +92,6 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# base_path - path to INGENIOUS folder
 	# ind_emi_path - path to emission rates from indoor activities
 	# outd_dir_basic - path to outdoor concentrations
-	# oc_rn - code for meteorological condition
 	# ------------------------------
 
 	# set number of particle size bins
@@ -120,12 +117,18 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# explanation in photolysisRates
 	light_status = '3'		
 
-	
 	# set range for tranmission factor 
 	# of light through glass, to be used in addition
 	# to the wavelength-dependent transmission factor
 	# in photolysisRates
 	tf_list = [0.5]
+
+	# section for Rhys to edit for sensitivity runs begins ------------
+
+	# outdoor concentration names (first letter for season (s for summer), 
+	# second for meterological condition (g for stagnant and dry), third 
+	# for location (r for rural))
+	oc_rn = ['swu']
 
 	# set activity frequency
 	mop_freqs = [0]
@@ -137,7 +140,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	wbs_freqs = [0]
 	vac_freqs = [2]
 	cls_freqs = [2]
-	smo_freqs = [2]
+	smo_freqs = [0]
 
 	# set activity start times (hours through day)
 	mop_times = []
@@ -149,7 +152,36 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	wbs_times = []
 	vac_times = [9.5, 11.]
 	cls_times = [10.5, 16.]
-	smo_times = [11.17, 15.]
+	#smo_times = [11.17, 15.]
+	smo_times = []
+
+	# name for results folder
+	res_nam = 'Bradford_June_wkday_busy_household_complete'
+
+	# flag for whether to turn on ingress of outdoor particles (0)
+	# or to turn it off (1)
+	without_outdoor_particle_flag = 0
+
+	# flag for whether to turn on egress of indoor particles (0)
+	# or to turn it off (1)
+	without_particle_egress_flag = 0
+
+	# set the function for rate of particle deposition to surfaces
+	# as a function of particle size, note that for the complete
+	# simulation, values are: inflectDp = 8.e-7, 
+	# Grad_pre_inflect = 1.6, Grad_post_inflect = 0.6,
+	# Rate_at_inflect = 2.33e-5. To turn off, set:
+	# Grad_pre_inflect = 0., Grad_post_inflect = 0.
+	# Rate_at_inflect = 0.
+	
+	inflectDp = 8.e-7
+	# to turn off particle deposition to surface, 
+	# set the following three variables to zero
+	Grad_pre_inflect = 1.6
+	Grad_post_inflect = 0.6
+	Rate_at_inflect = 2.33e-5
+
+	# section for Rhys to edit for sensitivity runs ends ------------
 
 	# set activity duration (hours taken)
 	mop_dur = 0.33
@@ -282,51 +314,32 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# loop through simulations
 	for simi in range(1):
 
-		# initiate results folder name
-		res_nam = ''
-
 		# setting parameter values starts -----------------
 
 		# set outdoor condition
 		oci = oc_rn[0]
-		res_nam = str(res_nam + oci + '_')
 	
 		# set air change rate
 		acr = np.array((acr_range)).reshape(-1)
-
-		# update results name
-		res_nam = str(res_nam + str(acr[0]) + 'acr_')
 
 		# set light transmission factor
 		tf = tf_list[0]
 		tf_str = str(tf)
 
-		# update results name
-		res_nam = str(res_nam + str(tf) + 'tf_')
-
 		# set mop frequency
 		mop_freq = mop_freqs[0]
-		# update results name
-		res_nam = str(res_nam + str(mop_freq) + 'mops_')
 
 		# set fry frequency
 		fry_freq = fry_freqs[0]
-		# update results name
-		res_nam = str(res_nam + str(fry_freq) + 'fry_')
 
 		# set bath frequency
 		bath_freq = bath_freqs[0]
-		# update results name
-		res_nam = str(res_nam + str(bath_freq) + 'sho_')
 
 		# set personal care product frequency
 		pcp_freq = pcp_freqs[0]
-		res_nam = str(res_nam + str(pcp_freq) + 'pcp_')
 
 		# set wood burning stove frequency
 		wbs_freq = wbs_freqs[0]
-		# update results name
-		res_nam = str(res_nam + str(wbs_freq) + 'wst_thirdtry')
 
 		# setting parameter values ends --------------------
 
@@ -400,6 +413,8 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('spin_up = ' + '2' + '\n'))
 		lines.append(str('C0 = ' + res_nam_orig + '\n'))
 		lines.append(str('pars_skip = 0' + '\n'))
+		if (without_particle_egress_flag == 1):
+			lines.append(str('dil_fac_status = 1'))
 		lines.append(str('dil_fac = ' + str(acr).replace(
 		'\n', '').replace('[', '').replace(']', '').replace(
 		' ', ',') + '\n'))
@@ -417,10 +432,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		'is taken from the PyCHAM inputs for comparison against the ' +
 		'Tran et a. 2017 paper, used for EAC2023 results: ' +
 		'INGENIOUS/Meetings/EAC2023/EAC2023_poster_input_output/Tran2017' + '\n'))
-		lines.append(str('inflectDp = ' + '8.e-7' + '\n'))
-		lines.append(str('Grad_pre_inflect = ' + '1.6' + '\n'))
-		lines.append(str('Grad_post_inflect = ' + '0.6' + '\n'))
-		lines.append(str('Rate_at_inflect = ' + '2.33e-5' + '\n'))
+		lines.append(str('inflectDp = ' + str(inflectDp) + '\n'))
+		lines.append(str('Grad_pre_inflect = ' + str(Grad_pre_inflect) + '\n'))
+		lines.append(str('Grad_post_inflect = ' + str(Grad_post_inflect) + '\n'))
+		lines.append(str('Rate_at_inflect = ' + str(Rate_at_inflect) + '\n'))
 		lines.append(str('mass_trans_coeff = 2.7e-3; NO2_wall1_1.1e-4' + '\n'))
 		lines.append(str('eff_abs_wall_massC = 1.e1' + '\n'))
 		lines.append(str('ppartit_cutoff = 1.e2' + '\n'))
@@ -497,7 +512,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 		# set path to directory
 		outd_dir = str(outd_dir_basic + outd_dir_name)
-
+		
 		# withdraw times (s)
 		fname = str(outd_dir + '/time')
 		t_array = np.loadtxt(fname, delimiter=',', skiprows=1)
@@ -515,7 +530,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		load_path = str(outd_dir + '/MV.npy') # path
 		MV = np.load(load_path, allow_pickle=True)
 
-		# estimated component densities (g/cm3)
+		# estimated component densities (g/cm^3)
 		dens = y_MM/MV
 
 		# number of components from outdoor simulation
@@ -524,7 +539,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# result
 		nc0 = nc
 
-		# get factor to multiply ppb to get molecules/cm3
+		# get factor to multiply ppb to get molecules/cm^3
 		fname = str(outd_dir + '/model_and_component_constants')
 		const_in = open(fname)
 		for line in const_in.readlines():
@@ -565,6 +580,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 		# convert gas-phase concentrations from ppb to molecules/cm^3
 		y[:, 0:nc] = y[:, 0:nc]*(np.array((Cfactor)).reshape(-1, 1))
+
+		# if outdoor particles to be zeroed, then zero particle component
+		# concentrations now
+		if (without_outdoor_particle_flag == 1):
+			y[:, nc::] = 0.
 
 		# get number of particle size bins outdoors
 		nsb = int(x.shape[1])
@@ -649,6 +669,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		Nwet = np.loadtxt(fname, delimiter=',', skiprows=1)
 		if (nsb == 1): # if just one size bin, ensure two dimensions
 			Nwet = Nwet.reshape(-1, 1)
+
+		# if we want to zero outdoor particle concentrations, then do this here
+		# for particle number concentration
+		if (without_outdoor_particle_flag == 1):
+			Nwet[:, :] = 0.
 		
 		# if user wants more size bins than was present in outdoor simulation,
 		# create dummy entries for additional size bins for outdoors
@@ -664,7 +689,6 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		acr_t_array = np.zeros((len(t_array)))
 		for ti in range(len(t_array)):
 			acr_t_array[ti] = acr[np.sum(acr_times>=t_array[ti])-1]
-
 
 		# prepare to hold names of particle-phase components
 		# emitted indoors
@@ -1449,4 +1473,4 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 # call function
 mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path, 
-	ind_emi_path, outd_dir_basic, oc_rn)
+	ind_emi_path, outd_dir_basic)
