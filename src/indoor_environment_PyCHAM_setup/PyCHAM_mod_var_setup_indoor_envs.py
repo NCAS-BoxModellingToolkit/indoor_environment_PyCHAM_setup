@@ -47,16 +47,15 @@ env_vol = (5.e2*6.e2*6.e2)
 env_vol = 2.9e8
 
 # path to emission rates from indoor activities
-ind_emi_path = str('/Users/user/Documents/GitHub/' +
+ind_emi_path = str(base_path + '/GitHub/' +
 		'NCAS-BoxModellingToolkit/' +
 		'indoor_environment_PyCHAM_setup/src' +
 		'/indoor_environment_PyCHAM_setup/' +
 		'indoor_emi_pri_org_VBS.xlsx')
 
 # path to directory containing outdoor concentrations
-outd_dir_basic = str('/Users/user/Library/CloudStorage' +
-		'/OneDrive-TheUniversityofManchester/' +
-		'GitHub/NCAS-BoxModellingToolkit/' +
+outd_dir_basic = str(base_path +
+		'/GitHub/NCAS-BoxModellingToolkit/' +
 		'indoor_environment_PyCHAM_setup/src/' +
 		'indoor_environment_PyCHAM_setup/')
 
@@ -441,12 +440,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('ppartit_cutoff = 1.e2' + '\n'))
 		lines.append(str('wpartit_cutoff = 1.e10' + '\n'))
 		lines.append(str('z_prt_coeff_loC = 1.e-6' + '\n'))
-
-		# set day of year, omit final \n as this is the final line
-		if (res_nam[0] == 's'):
-			lines.append(str('DayOfYear = ' + '183'))
-		if (res_nam[0] == 'w'):
-			lines.append(str('DayOfYear = ' + '1'))
+		lines.append(str('DayOfYear = ' + '183'))
 
 		# write out updated text
 		for line in lines:
