@@ -133,32 +133,21 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# for location (r for rural))
 	oc_rn = ['swu']
 
-	# set activity frequency
-	mop_freqs = [0]
-	fry_freqs = [1]
-	dust_freqs = [0]
-	bath_freqs = [2]
-	pcp_freqs = [2]
-	frag_freqs = [25]
-	wbs_freqs = [0]
-	vac_freqs = [2]
-	cls_freqs = [2]
-	smo_freqs = [2]
-
-	# set activity start times (hours through day)
-	mop_times = []
-	fry_times = [14.]
-	dust_times = []
-	bath_times = [9., 19.]
-	pcp_times = [8., 16.]
-	frag_times = [8., 8.1, 8.2, 8.3, 8.4, 9.0, 9.1, 9.2, 9.3, 9.4, 9.75, 9.85, 9.95, 10.5, 10.6, 10.7, 10.8, 10.9, 11.0, 16.0, 16.1, 16.2, 16.3, 16.4, 16.5]
-	wbs_times = []
-	vac_times = [9.5, 11.]
-	cls_times = [10.5, 16.]
-	smo_times = [11.17, 15.]
+	# set following flags to 1 to turn off a particular activity, 
+	# otherwise set to 0 to leave activity turned on
+	mop_off = 0 # mopping
+	fry_off = 0 # frying
+	dust_off = 0 # dusting
+	bath_off = 0 # bathing/showering
+	pcp_off = 0 # personal care product, e.g. body spray
+	frag_off = 0 # air freshener
+	wbs_off = 0 # wood burning stove
+	vac_off = 0 # vacuum cleaning
+	cls_off = 0 # cleaning spray
+	smo_off = 0 # smoking cigarette
 
 	# name for results folder
-	res_nam = 'Bradford_June_wkday_busy_household_completedraft'
+	res_nam = 'Bradford_June_wkday_busy_household_complete'
 
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
@@ -183,9 +172,61 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	Grad_post_inflect = 0.6
 	Rate_at_inflect = 2.33e-5
 
-	spinupval = 0 # set to 2 for 24 hours of spin up
+	spinupval = 2 # set to 2 for 24 hours of spin up
 
 	# section for Rhys to edit for sensitivity runs ends ------------
+
+	# set activity frequency
+	if (mop_off == 1):
+		mop_freqs = [0]
+	else:
+		mop_freqs = [0]
+		mop_times = [] # activity start times (hours through day)
+	if (fry_off == 1):
+		fry_freqs = [0]
+	else:
+		fry_freqs = [1]
+		fry_times = [14.]
+	if (dust_off == 1):
+		dust_freqs = [0]
+	else:	
+		dust_freqs = [0]
+		dust_times = []
+	if (bath_off == 1):
+		bath_freqs = [0]
+	else:
+		bath_freqs = [2]
+		bath_times = [9., 19.]
+	if (pcp_off == 1):
+		pcp_freqs = [0]
+	else:
+		pcp_freqs = [2]
+		pcp_times = [8., 16.]
+	if (frag_off == 1):
+		frag_freqs = [0]
+	else:
+		frag_freqs = [25]
+		frag_times = [8., 8.1, 8.2, 8.3, 8.4, 9.0, 9.1, 9.2, 9.3, 9.4, 9.75, 9.85, 9.95, 10.5, 10.6, 10.7, 10.8, 10.9, 11.0, 16.0, 16.1, 16.2, 16.3, 16.4, 16.5]
+	if (wbs_off == 1):
+		wbs_freqs = [0]
+	else:
+		wbs_freqs = [0]
+		wbs_times = []
+	if (vac_off == 1):
+		vac_freqs = [0]
+	else:
+		vac_freqs = [2]
+		vac_times = [9.5, 11.]
+	if (cls_off == 1):
+		cls_freqs = [0]
+	else:
+		cls_freqs = [2]
+		cls_times = [10.5, 16.]
+	if (smo_off == 1):
+		smo_freqs = [0]
+	else:
+		smo_freqs = [2]
+		smo_times = [11.17, 15.]
 
 	# set activity duration (hours taken)
 	mop_dur = 0.33
