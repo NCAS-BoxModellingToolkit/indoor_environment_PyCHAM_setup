@@ -136,7 +136,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# set following flags to 1 to turn off a particular activity, 
 	# otherwise set to 0 to leave activity turned on
 	mop_off = 0 # mopping
-	fry_off = 0 # frying
+	fry_off = 1 # frying
 	dust_off = 0 # dusting
 	bath_off = 0 # bathing/showering
 	pcp_off = 0 # personal care product, e.g. body spray
@@ -147,7 +147,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	smo_off = 0 # smoking cigarette
 
 	# name for results folder
-	res_nam = 'Bradford_June_wkday_busy_household_complete'
+	res_nam = 'Bradford_June_wkday_busy_household_nofry'
 
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
@@ -157,24 +157,29 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# or to turn it off (1)
 	without_particle_egress_flag = 0
 
-	# set the function for rate of particle deposition to surfaces
-	# as a function of particle size, note that for the complete
-	# simulation, values are: inflectDp = 8.e-7, 
-	# Grad_pre_inflect = 1.6, Grad_post_inflect = 0.6,
-	# Rate_at_inflect = 2.33e-5. To turn off, set:
-	# Grad_pre_inflect = 0., Grad_post_inflect = 0.
-	# Rate_at_inflect = 0.
-	
-	inflectDp = 8.e-7
-	# to turn off particle deposition to surface, 
-	# set the following three variables to zero
-	Grad_pre_inflect = 1.6
-	Grad_post_inflect = 0.6
-	Rate_at_inflect = 2.33e-5
+	# flag for whether to turn off particle deposition to surface
+	without_particle_deposition_to_surface = 0
 
 	spinupval = 2 # set to 2 for 24 hours of spin up
 
 	# section for Rhys to edit for sensitivity runs ends ------------
+
+
+	# particle deposition to surface
+	inflectDp = 8.e-7
+	if (without_particle_deposition_to_surface == 1):
+		# to turn off particle deposition to surface, 
+		# set the following three variables to zero
+		Grad_pre_inflect = 0.
+		Grad_post_inflect = 0.
+		Rate_at_inflect = 0.
+
+	else:
+		# set the function for rate of particle deposition to surfaces
+		# as a function of particle size
+		Grad_pre_inflect = 1.6
+		Grad_post_inflect = 0.6
+		Rate_at_inflect = 2.33e-5
 
 	# set activity frequency
 	if (mop_off == 1):
@@ -184,46 +189,55 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		mop_times = [] # activity start times (hours through day)
 	if (fry_off == 1):
 		fry_freqs = [0]
+		fry_times = []
 	else:
 		fry_freqs = [1]
 		fry_times = [14.]
 	if (dust_off == 1):
 		dust_freqs = [0]
+		dust_times = []
 	else:	
 		dust_freqs = [0]
 		dust_times = []
 	if (bath_off == 1):
 		bath_freqs = [0]
+		bath_times = []
 	else:
 		bath_freqs = [2]
 		bath_times = [9., 19.]
 	if (pcp_off == 1):
 		pcp_freqs = [0]
+		pcp_times = []
 	else:
 		pcp_freqs = [2]
 		pcp_times = [8., 16.]
 	if (frag_off == 1):
 		frag_freqs = [0]
+		frag_times = []
 	else:
 		frag_freqs = [25]
 		frag_times = [8., 8.1, 8.2, 8.3, 8.4, 9.0, 9.1, 9.2, 9.3, 9.4, 9.75, 9.85, 9.95, 10.5, 10.6, 10.7, 10.8, 10.9, 11.0, 16.0, 16.1, 16.2, 16.3, 16.4, 16.5]
 	if (wbs_off == 1):
 		wbs_freqs = [0]
+		wbs_times = []
 	else:
 		wbs_freqs = [0]
 		wbs_times = []
 	if (vac_off == 1):
 		vac_freqs = [0]
+		vac_times = []
 	else:
 		vac_freqs = [2]
 		vac_times = [9.5, 11.]
 	if (cls_off == 1):
 		cls_freqs = [0]
+		cls_times = []
 	else:
 		cls_freqs = [2]
 		cls_times = [10.5, 16.]
 	if (smo_off == 1):
 		smo_freqs = [0]
+		smo_times = []
 	else:
 		smo_freqs = [2]
 		smo_times = [11.17, 15.]
