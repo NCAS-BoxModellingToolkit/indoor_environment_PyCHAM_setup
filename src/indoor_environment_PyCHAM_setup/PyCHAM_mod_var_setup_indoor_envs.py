@@ -28,13 +28,17 @@ path_there = str(base_path + '/INGENIOUS/Papers/' +
 		'simulated_PM_mass_versus_observation/PyCHAM_in/')
 
 # path to chemical scheme file
-chem_sch_name = str(base_path + '/INGENIOUS/Papers/' +
-		'simulated_PM_mass_versus_observation/PyCHAM_in/' +
+chem_sch_name = str(base_path + '/GitHub/' +
+		'NCAS-BoxModellingToolkit/' +
+		'indoor_environment_PyCHAM_setup/src' +
+		'/indoor_environment_PyCHAM_setup/' +
 		'fullMCM_PRAMAP_autoAPRAMBZ.kpp')
 
 # path to xml file
-xml_name = str(base_path + '/INGENIOUS/Papers/' +
-		'simulated_PM_mass_versus_observation/PyCHAM_in/' +
+xml_name = str(base_path + '/GitHub/' +
+		'NCAS-BoxModellingToolkit/' +
+		'indoor_environment_PyCHAM_setup/src' +
+		'/indoor_environment_PyCHAM_setup/' +
 		'MCM_PRAM_autoAPRAMfw_xml.xml')
 
 # path to results folder
@@ -139,7 +143,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	wbs_freqs = [0]
 	vac_freqs = [2]
 	cls_freqs = [2]
-	smo_freqs = [0]
+	smo_freqs = [2]
 
 	# set activity start times (hours through day)
 	mop_times = []
@@ -151,11 +155,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	wbs_times = []
 	vac_times = [9.5, 11.]
 	cls_times = [10.5, 16.]
-	#smo_times = [11.17, 15.]
-	smo_times = []
+	smo_times = [11.17, 15.]
 
 	# name for results folder
-	res_nam = 'Bradford_June_wkday_busy_household_complete'
+	res_nam = 'Bradford_June_wkday_busy_household_completedraft'
 
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
@@ -179,6 +182,8 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	Grad_pre_inflect = 1.6
 	Grad_post_inflect = 0.6
 	Rate_at_inflect = 2.33e-5
+
+	spinupval = 0 # set to 2 for 24 hours of spin up
 
 	# section for Rhys to edit for sensitivity runs ends ------------
 
@@ -409,7 +414,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			', &, , [, :, }, ;,' + '\n'))
 		lines.append(str('chem_sch_name = ' +  chem_sch_name + '\n'))
 		lines.append(str('xml_name = ' +  xml_name + '\n'))
-		lines.append(str('spin_up = ' + '2' + '\n'))
+		lines.append(str('spin_up = ' + str(spinupval) + '\n'))
 		lines.append(str('C0 = ' + res_nam_orig + '\n'))
 		lines.append(str('pars_skip = 0' + '\n'))
 		if (without_particle_egress_flag == 1):

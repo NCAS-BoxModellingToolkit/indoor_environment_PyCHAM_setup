@@ -33,8 +33,38 @@
 <species species_number="s1" species_name="pri_orgin">
 <smiles>CCCCCCCCCCCCCCCC(=O)O</smiles>
 </species>
+<species species_number="s1" species_name="pri_org_ind">
+<smiles>CCCCCCCCCCCCCCCC(=O)O</smiles>
+</species>
 <species species_number="s1" species_name="core_ind">
 <smiles>CCCCCCCCCC</smiles>
+</species>
+<species species_number="s1" species_name="nalk_ind">
+<smiles>CCCCCCCCCCCCCCCCCCCCC</smiles>
+</species>
+<species species_number="s1" species_name="SiO2_ind">
+<smiles>CCCCCCCCCC</smiles>
+</species>
+<species species_number="s1" species_name="BZK_ind">
+<smiles>[Cl-].CCCCCCCCCCCCCC[N+](C)(C)Cc1ccccc1</smiles>
+</species>
+<species species_number="s1" species_name="ALLYLAMINE">
+<smiles>C=CCN</smiles>
+</species>
+<species species_number="s1" species_name="CHLOROPROPENE">
+<smiles>C/C=C/Cl</smiles>
+</species>
+<species species_number="s1" species_name="CHLOROACTEONE">
+<smiles>CC(=O)CCl</smiles>
+</species>
+<species species_number="s1" species_name="BENZYLAMINE">
+<smiles>C1=CC=C(C=C1)CN</smiles>
+</species>
+<species species_number="s1" species_name="BENZYLCHLORIDE">
+<smiles>C1=CC=C(C=C1)CCl</smiles>
+</species>
+<species species_number="s1" species_name="BENZALCHLORIDE">
+<smiles>C1=CC=C(C=C1)C(Cl)Cl</smiles>
 </species>
 <species species_number="s1" species_name="BaP">
 <smiles>c1ccc2c(c1)cc3ccc4cccc5c4c3c2cc5</smiles>

@@ -27838,7 +27838,7 @@ CALL mcm_constants(time, temp, M, N2, O2, RO2, H2O)
 {4511.}      C4CO2DBCO3 + C813O2 = C4a_AP30 : 3.4641e-13 ; 
 {4512.}      C4CO2DBCO3 + C721CO3 = C4a_AP31 : 3.4641e-13 ; 
 # autoAPRAM-fw finish
-# additional components present indoors
+# additional components from indoor emissions
 {1774.}     BaP = BaP     :            0.0 ;
 {1775.}     MYOSMINE = MYOSMINE     :            0.0 ;
 {1776.}     NICOTINE = NICOTINE     :            0.0 ;
@@ -27857,3 +27857,16 @@ CALL mcm_constants(time, temp, M, N2, O2, RO2, H2O)
 {1789.}     sec_org-1 = sec_org-1    :            0.0 ;
 {1790.}     sec_org0 = sec_org0    :            0.0 ;
 {1791.}     sec_org1 = sec_org1    :            0.0 ;
+{1792.}     pri_orgin = pri_orgin    :            0.0 ;
+{1792.}     pri_org_ind = pri_org_ind    :            0.0 ;
+{1792.}     bcin = bcin    :            0.0 ;
+{1792.}     bc = bc    :            0.0 ;
+{1792.}     core_ind = core_ind    :            0.0 ;
+{1792.}     nalk_ind = nalk_ind    :            0.0 ;
+{1792.}     SiO2_ind = SiO2_ind    :            0.0 ;
+{1792.}     ALLYLAMINE = ALLYLAMINE    :            0.0 ;
+{1792.}     CHLOROPROPENE = CHLOROPROPENE    :            0.0 ;
+{1792.}     CHLOROACTEONE = CHLOROACTEONE    :            0.0 ;
+{1792.}     BENZYLAMINE = BENZYLAMINE    :            0.0 ;
+{1792.}     BENZYLCHLORIDE = BENZYLCHLORIDE    :            0.0 ;
+{1792.}     BENZALCHLORIDE = BENZALCHLORIDE    :            0.0 ;
