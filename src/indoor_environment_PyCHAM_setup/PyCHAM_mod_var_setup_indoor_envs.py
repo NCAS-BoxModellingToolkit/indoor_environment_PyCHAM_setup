@@ -126,17 +126,20 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# in photolysisRates
 	tf_list = [0.5]
 
-	# section for Rhys to edit for sensitivity runs begins ------------
-
 	# outdoor concentration names (first letter for season (s for summer), 
 	# second for meterological condition (g for stagnant and dry), third 
 	# for location (r for rural))
 	oc_rn = ['swu']
 
+	# section for Rhys to edit for sensitivity runs begins ------------
+
+	# name for results folder
+	res_nam = 'Bradford_June_wkday_busy_household_noingress'
+
 	# set following flags to 1 to turn off a particular activity, 
 	# otherwise set to 0 to leave activity turned on
 	mop_off = 0 # mopping
-	fry_off = 1 # frying
+	fry_off = 0 # frying
 	dust_off = 0 # dusting
 	bath_off = 0 # bathing/showering
 	pcp_off = 0 # personal care product, e.g. body spray
@@ -146,12 +149,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	cls_off = 0 # cleaning spray
 	smo_off = 0 # smoking cigarette
 
-	# name for results folder
-	res_nam = 'Bradford_June_wkday_busy_household_nofry'
-
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
-	without_outdoor_particle_flag = 0
+	without_outdoor_particle_flag = 1
 
 	# flag for whether to turn on egress of indoor particles (0)
 	# or to turn it off (1)
@@ -473,7 +473,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('C0 = ' + res_nam_orig + '\n'))
 		lines.append(str('pars_skip = 0' + '\n'))
 		if (without_particle_egress_flag == 1):
-			lines.append(str('dil_fac_status = 1'))
+			lines.append(str('dil_fac_status = 1' + '\n'))
 		lines.append(str('dil_fac = ' + str(acr).replace(
 		'\n', '').replace('[', '').replace(']', '').replace(
 		' ', ',') + '\n'))

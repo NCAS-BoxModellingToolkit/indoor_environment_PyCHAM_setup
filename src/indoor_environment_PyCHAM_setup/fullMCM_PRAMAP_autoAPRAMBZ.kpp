@@ -27858,7 +27858,10 @@ CALL mcm_constants(time, temp, M, N2, O2, RO2, H2O)
 {1790.}     sec_org0 = sec_org0    :            0.0 ;
 {1791.}     sec_org1 = sec_org1    :            0.0 ;
 {1792.}     pri_orgin = pri_orgin    :            0.0 ;
+{1792.}     pri_org = pri_org    :            0.0 ;
 {1792.}     pri_org_ind = pri_org_ind    :            0.0 ;
+{1792.}     AMM_SUL = AMM_SUL    :            0.0 ;
+{1792.}     AMM_NIT = AMM_NIT    :            0.0 ;
 {1792.}     bcin = bcin    :            0.0 ;
 {1792.}     bc = bc    :            0.0 ;
 {1792.}     core_ind = core_ind    :            0.0 ;
