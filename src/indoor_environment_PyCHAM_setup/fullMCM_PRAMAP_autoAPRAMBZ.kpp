@@ -27873,3 +27873,4 @@ CALL mcm_constants(time, temp, M, N2, O2, RO2, H2O)
 {1792.}     BENZYLAMINE = BENZYLAMINE    :            0.0 ;
 {1792.}     BENZYLCHLORIDE = BENZYLCHLORIDE    :            0.0 ;
 {1792.}     BENZALCHLORIDE = BENZALCHLORIDE    :            0.0 ;
+{1792.}     POT_NIT = POT_NIT    :            0.0 ;

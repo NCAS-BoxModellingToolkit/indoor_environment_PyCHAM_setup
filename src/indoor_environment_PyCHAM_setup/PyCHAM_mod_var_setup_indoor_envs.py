@@ -22,7 +22,6 @@ if 'Darwin' in platform.system() or 'Linux' in platform.system():
 if 'Win' in platform.system() or 'Linux' in platform.system():
 	base_path = 'C:/Users/Psymo/OneDrive - The University of Manchester'
 
-
 # path to folder where model variable and continuous influx inputs will be saved
 path_there = str(base_path + '/INGENIOUS/Papers/' +
 		'simulated_PM_mass_versus_observation/PyCHAM_in/')
@@ -46,9 +45,10 @@ res_path = str(base_path + '/INGENIOUS/Papers/' +
 		'simulated_PM_mass_versus_observation/PyCHAM_out/')
 
 # the volume (cm^3) of the envelope that emissions are released into
-# and therefore diluted
-env_vol = (5.e2*6.e2*6.e2)
-env_vol = 2.9e8
+# and therefore diluted, e.g. assuming that the combined volume of
+# kitchen, living room and observed bedroom represents half the
+# entire volume of home, as done for INGENIOUS homes
+env_vol = 1.6e8
 
 # path to emission rates from indoor activities
 ind_emi_path = str(base_path + '/GitHub/' +
@@ -96,7 +96,6 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# ind_emi_path - path to emission rates from indoor activities
 	# outd_dir_basic - path to outdoor concentrations
 	# ------------------------------
-
 	# set number of particle size bins
 	nsb_user = 3
 
@@ -106,11 +105,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# set air change rate (for maximum:
 	# https://www.vent-axia.com/sites/default/files/
 	# 2023-11/97ee4be4-7c33-4f0d-a775-5b8c83ab1f5e.pdf)
-	# to align with air change rate times (acr_times variables)
-	acr_range = [0.7, 1., 4., 0.7]
+	# to align with air change rate times (acr_times variable)
+	acr_range = [0.7, 1., 0.7]
 
 	# set time for acr (s through simulation)
-	acr_times = np.array((0., 28800.0, 64200.0, 68400.0)).reshape(-1)
+	acr_times = np.array((0., 21600.0, 73380.0)).reshape(-1)
 
 	# note that inside photolysisRates is a prescribed
 	# wavelength-dependent transmission factor
@@ -134,7 +133,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# section for Rhys to edit for sensitivity runs begins ------------
 
 	# name for results folder
-	res_nam = 'Bradford_June_wkday_busy_household_noingress'
+	res_nam = 'Bradford_August_wkday_combustion_household_complete'
 
 	# set following flags to 1 to turn off a particular activity, 
 	# otherwise set to 0 to leave activity turned on
@@ -148,10 +147,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	vac_off = 0 # vacuum cleaning
 	cls_off = 0 # cleaning spray
 	smo_off = 0 # smoking cigarette
+	cand_off = 0 # candle
 
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
-	without_outdoor_particle_flag = 1
+	without_outdoor_particle_flag = 0
 
 	# flag for whether to turn on egress of indoor particles (0)
 	# or to turn it off (1)
@@ -184,6 +184,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# set activity frequency
 	if (mop_off == 1):
 		mop_freqs = [0]
+		mop_times = [] # activity start times (hours through day)
 	else:
 		mop_freqs = [0]
 		mop_times = [] # activity start times (hours through day)
@@ -192,7 +193,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		fry_times = []
 	else:
 		fry_freqs = [1]
-		fry_times = [14.]
+		fry_times = [8.]
 	if (dust_off == 1):
 		dust_freqs = [0]
 		dust_times = []
@@ -203,20 +204,20 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		bath_freqs = [0]
 		bath_times = []
 	else:
-		bath_freqs = [2]
-		bath_times = [9., 19.]
+		bath_freqs = [0]
+		bath_times = []
 	if (pcp_off == 1):
 		pcp_freqs = [0]
 		pcp_times = []
 	else:
-		pcp_freqs = [2]
-		pcp_times = [8., 16.]
+		pcp_freqs = [1]
+		pcp_times = [8.]
 	if (frag_off == 1):
 		frag_freqs = [0]
 		frag_times = []
 	else:
-		frag_freqs = [25]
-		frag_times = [8., 8.1, 8.2, 8.3, 8.4, 9.0, 9.1, 9.2, 9.3, 9.4, 9.75, 9.85, 9.95, 10.5, 10.6, 10.7, 10.8, 10.9, 11.0, 16.0, 16.1, 16.2, 16.3, 16.4, 16.5]
+		frag_freqs = [10]
+		frag_times = [5., 5.1, 5.2, 5.3, 5.4, 7.0, 7.1, 7.2, 7.3, 7.4]
 	if (wbs_off == 1):
 		wbs_freqs = [0]
 		wbs_times = []
@@ -228,23 +229,31 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		vac_times = []
 	else:
 		vac_freqs = [2]
-		vac_times = [9.5, 11.]
+		vac_times = [7., 8.]
 	if (cls_off == 1):
 		cls_freqs = [0]
 		cls_times = []
 	else:
 		cls_freqs = [2]
-		cls_times = [10.5, 16.]
+		cls_times = [7., 8.]
 	if (smo_off == 1):
 		smo_freqs = [0]
 		smo_times = []
 	else:
-		smo_freqs = [2]
-		smo_times = [11.17, 15.]
+		smo_freqs = [0]
+		smo_times = []
+	if (cand_off == 1):
+		cand_freqs = [0]
+		cand_times = []
+		cand_num = 0
+	else:
+		cand_freqs = [1]
+		cand_times = [6.]
+		cand_num = 2 # number of candles
 
 	# set activity duration (hours taken)
 	mop_dur = 0.33
-	fry_dur = 0.5
+	fry_dur = 0.28
 	dust_dur = 0.33
 	bath_dur = 0.33
 	# 1 second, which, when combined with the emission rate for 
@@ -263,6 +272,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# indoor_emi_pri_org_VBS)
 	cls_dur = 2.78e-4
 	smo_dur = 0.16
+	cand_dur = 17.
 
 	# loading emission rates from indoor activities start ------------
 	# get the names of all components with influx from
@@ -350,6 +360,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				if 'ir freshener' in col_head:
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('frag')
+				if 'candle' in col_head:
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('cand')
 			continue # onto next row
 		
 		if (inf_col == 1):
@@ -436,7 +449,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# remember path to original simulation results
 		if (simi == 0):
 			res_nam_orig = res_nam_mod_var_file
-		
+		lines.append(str('# note that a box volume (env_vol) of ' + str(env_vol) + ' cm^3 was used\n'))
+		lines.append(str('# note that ' + oc_rn[0] + ' was used for the season and meteorology\n'))
+				   
 		lines.append(str('res_file_name = ' + res_nam_mod_var_file + '\n'))
 		lines.append(str('total_model_time = ' + '8.64e4' + '\n'))
 		lines.append(str('update_step = ' + '3.0e2' + '\n'))
@@ -516,7 +531,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# (every 5 minutes in columns))
 		mop_times = []
 		act_matrix_act_order = np.array(('mop', 'fry', 'sho', 'pcp', 'wst', 
-			'vac', 'cls', 'frag', 'smo'))
+			'vac', 'cls', 'frag', 'smo', 'cand'))
 		act_matrix = np.zeros((len(act_matrix_act_order)+1, int((24*3600)/300)))
 		act_matrix[0, :] = np.arange(0., (24.*3600.), 300.)
 		
@@ -560,6 +575,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		for smoi in smo_times[0:smo_freqs[0]]: # loop through times
 			smo_ti = (all_times_hr >= smoi)*(all_times_hr < smoi+smo_dur)
 			act_matrix[9, :][smo_ti] = 1
+		
+		for candi in cand_times[0:cand_freqs[0]]: # loop through times
+			cand_ti = (all_times_hr >= candi)*(all_times_hr < candi+cand_dur)
+			act_matrix[10, :][cand_ti] = 1
 
 		# file name
 		outd_dir_name = str('outprep_' + oci)
@@ -836,6 +855,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					if 'BZK' in ind_compi:
 						y_dens_ind.append(0.8613842553191489)
 						y_MM_ind.append(368.03928)
+
+					if 'POT_NIT' in ind_compi:
+						y_dens_ind.append(2.11)
+						y_MM_ind.append(101.1)
 					
 					prop_list.append(ind_compi)
 

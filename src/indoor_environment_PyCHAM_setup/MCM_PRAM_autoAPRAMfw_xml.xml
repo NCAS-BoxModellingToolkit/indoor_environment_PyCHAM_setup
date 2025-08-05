@@ -48,6 +48,9 @@
 <species species_number="s1" species_name="BZK_ind">
 <smiles>[Cl-].CCCCCCCCCCCCCC[N+](C)(C)Cc1ccccc1</smiles>
 </species>
+<species species_number="s1" species_name="POT_NIT_ind">
+<smiles>[K+].[O-][N+]([O-])=O</smiles>
+</species>
 <species species_number="s1" species_name="ALLYLAMINE">
 <smiles>C=CCN</smiles>
 </species>
