@@ -44,12 +44,6 @@ xml_name = str(base_path + '/GitHub/' +
 res_path = str(base_path + '/INGENIOUS/Papers/' +
 		'simulated_PM_mass_versus_observation/PyCHAM_out/')
 
-# the volume (cm^3) of the envelope that emissions are released into
-# and therefore diluted, e.g. assuming that the combined volume of
-# kitchen, living room and observed bedroom represents half the
-# entire volume of home, as done for INGENIOUS homes
-env_vol = 1.6e8
-
 # path to emission rates from indoor activities
 ind_emi_path = str(base_path + '/GitHub/' +
 		'NCAS-BoxModellingToolkit/' +
@@ -102,14 +96,33 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# set radius bounds of size bins
 	lps = [9.e-4, 8.e-2, 1.25, 10.]
 
+	# suggested start of user-defined variables -----------------------
+
+	# whether to shift all times back by 1 hour, e.g. so that times
+	# recorded in British Summer Time are consistent with other times
+	# recorded in Universal Time Constant (which is equivalent to
+	# Greenwhich Meridian Time) (set to 1 to shift, 0 for no shift)
+	time_shift_back = 0
+
+	# the volume (cm^3) of the envelope that emissions are released into
+	# and therefore diluted, e.g. assuming that the combined volume of
+	# kitchen, living room and observed bedroom represents half the
+	# entire volume of home, as done for INGENIOUS homes
+	env_vol = 224000000.0 # 1.6e8 for combustion home
+
 	# set air change rate (for maximum:
 	# https://www.vent-axia.com/sites/default/files/
 	# 2023-11/97ee4be4-7c33-4f0d-a775-5b8c83ab1f5e.pdf)
 	# to align with air change rate times (acr_times variable)
-	acr_range = [0.7, 1., 0.7]
+	# for combustion home
+	acr_range = [0.9, 0.9, 0.9] # 0.7, 1.5, 0.7 for combustion household
 
 	# set time for acr (s through simulation)
 	acr_times = np.array((0., 21600.0, 73380.0)).reshape(-1)
+
+	# in case time shift back needed
+	if (time_shift_back == 1):
+		acr_times[acr_times>0.] -= 3600.
 
 	# note that inside photolysisRates is a prescribed
 	# wavelength-dependent transmission factor
@@ -130,28 +143,37 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# for location (r for rural))
 	oc_rn = ['swu']
 
-	# section for Rhys to edit for sensitivity runs begins ------------
+	# day of year simulation starts on (as string), where 1 is 1st January
+	day_of_year = '220'
 
 	# name for results folder
-	res_nam = 'Bradford_August_wkday_combustion_household_complete'
+	res_nam = 'fry_test_against_doiporgslash10p1016slashjpatmosenvp2009p03p044'
+
+	# total time to simulate over (s) (8.64e4 for 24 hours)
+	total_model_time = 3600.
+
+	# time step for recording simulated results (s)
+	rec_time_step = 300.
 
 	# set following flags to 1 to turn off a particular activity, 
 	# otherwise set to 0 to leave activity turned on
-	mop_off = 0 # mopping
+	mop_off = 1 # mopping
 	fry_off = 0 # frying
-	dust_off = 0 # dusting
-	bath_off = 0 # bathing/showering
-	pcp_off = 0 # personal care product, e.g. body spray
-	frag_off = 0 # air freshener
-	wbs_off = 0 # wood burning stove
-	vac_off = 0 # vacuum cleaning
-	cls_off = 0 # cleaning spray
-	smo_off = 0 # smoking cigarette
-	cand_off = 0 # candle
+	dust_off = 1 # dusting
+	bath_off = 1 # bathing/showering
+	pcp_off = 1 # personal care product, e.g. body spray
+	fresh_off = 1 # air freshener
+	wbs_off = 1 # wood burning stove
+	vac_off = 1 # vacuum cleaning
+	cls_off = 1 # cleaning spray
+	smo_off = 1 # smoking cigarette
+	cand_off = 1 # candle
+	fcand_off = 1 # flickering candle
+	gasf_off = 1 # dirty gas fireplace
 
 	# flag for whether to turn on ingress of outdoor particles (0)
 	# or to turn it off (1)
-	without_outdoor_particle_flag = 0
+	without_outdoor_particle_flag = 1
 
 	# flag for whether to turn on egress of indoor particles (0)
 	# or to turn it off (1)
@@ -160,10 +182,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# flag for whether to turn off particle deposition to surface
 	without_particle_deposition_to_surface = 0
 
-	spinupval = 2 # set to 2 for 24 hours of spin up
-
-	# section for Rhys to edit for sensitivity runs ends ------------
-
+	spinupval = 0 # set to 2 for 24 hours of spin up
 
 	# particle deposition to surface
 	inflectDp = 8.e-7
@@ -181,79 +200,121 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		Grad_post_inflect = 0.6
 		Rate_at_inflect = 2.33e-5
 
-	# set activity frequency
+	# set activity frequency and times (hours through day)
 	if (mop_off == 1):
 		mop_freqs = [0]
 		mop_times = [] # activity start times (hours through day)
 	else:
 		mop_freqs = [0]
-		mop_times = [] # activity start times (hours through day)
+		mop_times = np.array([]) # activity start times (hours through day)
+		if (time_shift_back == 1):
+			mop_times[mop_times>0.] -= 1.
 	if (fry_off == 1):
 		fry_freqs = [0]
 		fry_times = []
 	else:
 		fry_freqs = [1]
-		fry_times = [8.]
+		fry_times = np.array([0.00139])
+		if (time_shift_back == 1):
+			fry_times[np.array(fry_times)>0.] -= 1.
 	if (dust_off == 1):
 		dust_freqs = [0]
 		dust_times = []
 	else:	
 		dust_freqs = [0]
-		dust_times = []
+		dust_times = np.array([])
+		if (time_shift_back == 1):
+			dust_times[np.array(dust_times)>0.] -= 1.
 	if (bath_off == 1):
 		bath_freqs = [0]
 		bath_times = []
 	else:
 		bath_freqs = [0]
-		bath_times = []
+		bath_times = np.array([])
+		if (time_shift_back == 1):
+			bath_times[np.array(bath_times)>0.] -= 1.
 	if (pcp_off == 1):
 		pcp_freqs = [0]
 		pcp_times = []
 	else:
-		pcp_freqs = [1]
-		pcp_times = [8.]
-	if (frag_off == 1):
-		frag_freqs = [0]
-		frag_times = []
+		pcp_freqs = [0]
+		pcp_times = np.array([])
+		if (time_shift_back == 1):
+			pcp_times[np.array(pcp_times)>0.] -= 1.
+	if (fresh_off == 1):
+		fresh_freqs = [0]
+		fresh_times = []
 	else:
-		frag_freqs = [10]
-		frag_times = [5., 5.1, 5.2, 5.3, 5.4, 7.0, 7.1, 7.2, 7.3, 7.4]
+		fresh_freqs = [10]
+		fresh_times = np.array([5., 5.1, 5.2, 5.3, 5.4, 7.0, 7.1, 7.2, 7.3, 7.4])
+		if (time_shift_back == 1):
+			fresh_times[np.array(fresh_times)>0.] -= 1.
 	if (wbs_off == 1):
 		wbs_freqs = [0]
 		wbs_times = []
 	else:
 		wbs_freqs = [0]
-		wbs_times = []
+		wbs_times = np.array([])
+		if (time_shift_back == 1):
+			wbs_times[np.array(wbs_times)>0.] -= 1.
 	if (vac_off == 1):
 		vac_freqs = [0]
 		vac_times = []
 	else:
 		vac_freqs = [2]
-		vac_times = [7., 8.]
+		vac_times = np.array([7., 8.])
+		if (time_shift_back == 1):
+			vac_times[np.array(vac_times)>0.] -= 1.
 	if (cls_off == 1):
 		cls_freqs = [0]
 		cls_times = []
 	else:
 		cls_freqs = [2]
-		cls_times = [7., 8.]
+		cls_times = np.array([7., 8.])
+		if (time_shift_back == 1):
+			cls_times[np.array(cls_times)>0.] -= 1.
 	if (smo_off == 1):
 		smo_freqs = [0]
 		smo_times = []
 	else:
 		smo_freqs = [0]
-		smo_times = []
+		smo_times = np.array([])
+		if (time_shift_back == 1):
+			smo_times[np.array(smo_times)>0.] -= 1.
+	# steady burn candle
 	if (cand_off == 1):
 		cand_freqs = [0]
 		cand_times = []
 		cand_num = 0
 	else:
-		cand_freqs = [1]
-		cand_times = [6.]
-		cand_num = 2 # number of candles
+		cand_freqs = [0]
+		cand_times = np.array([])
+		if (time_shift_back == 1):
+			cand_times[np.array(cand_times)>0.] -= 1.
+		cand_num = 0 # number of candles
+	# flickering candle
+	if (fcand_off == 1):
+		fcand_freqs = [0]
+		fcand_times = []
+		fcand_num = 0
+	else:
+		fcand_freqs = [1]
+		fcand_times = np.array([6.])
+		if (time_shift_back == 1):
+			fcand_times[np.array(fcand_times)>0.] -= 1.
+		fcand_num = 2 # number of candles
+	if (gasf_off == 1): # gas fire
+		gasf_freqs = [0]
+		gasf_times = []
+	else:
+		gasf_freqs = [0]
+		gasf_times = np.array([])
+		if (time_shift_back == 1):
+			gasf_times[np.array(gasf_times)>0.] -= 1.
 
 	# set activity duration (hours taken)
 	mop_dur = 0.33
-	fry_dur = 0.28
+	fry_dur = 0.25
 	dust_dur = 0.33
 	bath_dur = 0.33
 	# 1 second, which, when combined with the emission rate for 
@@ -262,7 +323,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	# detailed in the corresponding column header of 
 	# indoor_emi_pri_org_VBS)
 	pcp_dur = 2.78e-4
-	frag_dur = 0.1
+	fresh_dur = 0.1
 	wbs_dur = 1.5
 	vac_dur = 0.5
 	# 1 second, which, when combined with the emission rate for 
@@ -273,6 +334,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 	cls_dur = 2.78e-4
 	smo_dur = 0.16
 	cand_dur = 17.
+	fcand_dur = 17.
+	gasf_dur = 0.15
+
+	# suggested end of user-defined variables -----------------------
 
 	# loading emission rates from indoor activities start ------------
 	# get the names of all components with influx from
@@ -311,7 +376,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		
 		# if on row containing column headings
 		if ('MCM Name' in str(i)):
-		
+			
 			# flag to start collecting influx rates
 			inf_col = 1
 
@@ -320,7 +385,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			
 			# loop through column headers
 			for col_head in i:
-
+				
 				# count on columns
 				ic += 1
 				
@@ -357,12 +422,21 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				if 'leaning spray' in col_head:
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('cls')
-				if 'ir freshener' in col_head:
+				if ('ir freshener' in col_head):
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('fresh')
+				if ('ir frag' in col_head):
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('frag')
-				if 'candle' in col_head:
+				if ('candle' in col_head and 'flick' not in col_head):
 					comp_inf_col_indx.append(ic)
 					comp_inf_col_head.append('cand')
+				if ('candle' in col_head and 'flick' in col_head):
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('fcand')
+				if ('gas f' in col_head):
+					comp_inf_col_indx.append(ic)
+					comp_inf_col_head.append('gasf')
 			continue # onto next row
 		
 		if (inf_col == 1):
@@ -397,21 +471,6 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# set light transmission factor
 		tf = tf_list[0]
 		tf_str = str(tf)
-
-		# set mop frequency
-		mop_freq = mop_freqs[0]
-
-		# set fry frequency
-		fry_freq = fry_freqs[0]
-
-		# set bath frequency
-		bath_freq = bath_freqs[0]
-
-		# set personal care product frequency
-		pcp_freq = pcp_freqs[0]
-
-		# set wood burning stove frequency
-		wbs_freq = wbs_freqs[0]
 
 		# setting parameter values ends --------------------
 
@@ -453,9 +512,9 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('# note that ' + oc_rn[0] + ' was used for the season and meteorology\n'))
 				   
 		lines.append(str('res_file_name = ' + res_nam_mod_var_file + '\n'))
-		lines.append(str('total_model_time = ' + '8.64e4' + '\n'))
+		lines.append(str('total_model_time = ' + str(total_model_time) + '\n'))
 		lines.append(str('update_step = ' + '3.0e2' + '\n'))
-		lines.append(str('recording_time_step = ' + '6.0e2' + '\n'))
+		lines.append(str('recording_time_step = ' + str(rec_time_step) + '\n'))
 		lines.append(str('lat = ' + '53.' + '\n'))
 		lines.append(str('lon = ' + '1.' + '\n'))
 		lines.append(str('temperature = ' + '293.15' + '\n'))
@@ -470,11 +529,11 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('lower_part_size = ' + 
 			str(lps).replace('[', '').replace(']', '') + '\n'))
 		lines.append(str('upper_part_size = 10.' + '\n'))
-		lines.append(str('vol_Comp = BZK_ind, SiO2_ind, bc, AMM_SUL, pri_org, ' +
+		lines.append(str('vol_Comp = POT_NIT_ind, BZK_ind, SiO2_ind, bc, AMM_SUL, pri_org, ' +
 		'sec_org-2, sec_org-1, sec_org0, sec_org1, CO25C6CHO, ' +
 		'NLIMOOH, C1213OH, PNNCATCOOH, bcin, ' +
 		'pri_orgin, NO2_wall1, O3_wall1' + '\n'))
-		lines.append(str('volP = 0., 0., 0.0, 0.0, 0.0, 8.12e-16, 9.75e-12, '+
+		lines.append(str('volP = 0., 0., 0., 0.0, 0.0, 0.0, 8.12e-16, 9.75e-12, '+
 		'1.22e-7, 1.62e-4, 1.62e-4, 1.22e-7, 9.75e-12, 8.12e-16, '+
 		'0., 0., 0., 0.' + '\n'))
 		lines.append(str('nonHOMs_vp_method = EVAPORATION\n'))
@@ -485,7 +544,8 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('chem_sch_name = ' +  chem_sch_name + '\n'))
 		lines.append(str('xml_name = ' +  xml_name + '\n'))
 		lines.append(str('spin_up = ' + str(spinupval) + '\n'))
-		lines.append(str('C0 = ' + res_nam_orig + '\n'))
+		# in case starting concentrations wanted from somewhere
+		#lines.append(str('C0 = ' + res_nam_orig + '\n'))
 		lines.append(str('pars_skip = 0' + '\n'))
 		if (without_particle_egress_flag == 1):
 			lines.append(str('dil_fac_status = 1' + '\n'))
@@ -515,7 +575,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		lines.append(str('ppartit_cutoff = 1.e2' + '\n'))
 		lines.append(str('wpartit_cutoff = 1.e10' + '\n'))
 		lines.append(str('z_prt_coeff_loC = 1.e-6' + '\n'))
-		lines.append(str('DayOfYear = ' + '183'))
+		lines.append(str('DayOfYear = ' + day_of_year))
 
 		# write out updated text
 		for line in lines:
@@ -528,57 +588,97 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# start of continuous influx section ---------------
 		
 		# activity times and type matrix (activities in rows and times
-		# (every 5 minutes in columns))
-		mop_times = []
-		act_matrix_act_order = np.array(('mop', 'fry', 'sho', 'pcp', 'wst', 
-			'vac', 'cls', 'frag', 'smo', 'cand'))
+		# (every 5 minutes in columns)), should be same order as in
+		# reference emission spreadsheet
+		act_matrix_act_order = ['baseline', 'smo', 'fry', 'bleach', 'mop', 'pcp', 'wst', 'sho', 
+			'vac', 'cls', 'fresh', 'frag', 'cand', 'fcand', 'gasf']
+		# include a row for times
 		act_matrix = np.zeros((len(act_matrix_act_order)+1, int((24*3600)/300)))
 		act_matrix[0, :] = np.arange(0., (24.*3600.), 300.)
+		# corresponding number of activities per activity type
+		# include a row for times
+		act_number_per_act_type = np.zeros((len(act_matrix_act_order)+1, int((24*3600)/300)))
+		act_number_per_act_type[0, :] = np.arange(0., (24.*3600.), 300.)
 		
-	
 		# all times in hours
 		all_times_hr = act_matrix[0, :]/3600.
 
 		# activity times
-		for mopi in mop_times[0:mop_freq]: # loop through times
+		for mopi in mop_times[0:mop_freqs[0]]: # loop through times
 			mop_ti = (all_times_hr >= mopi)*(all_times_hr < mopi+mop_dur)
-			act_matrix[1, :][mop_ti] = 1
+			# get mop index
+			actindx = act_matrix_act_order.index('mop')+1
+			act_matrix[actindx, :][mop_ti] = 1
+			act_number_per_act_type[actindx, :][mop_ti] = 1
 	
-		for fryi in fry_times[0:fry_freq]: # loop through times
+		for fryi in fry_times[0:fry_freqs[0]]: # loop through times
 			fry_ti = (all_times_hr >= fryi)*(all_times_hr < fryi+fry_dur)
-			act_matrix[2, :][fry_ti] = 1
+			actindx = act_matrix_act_order.index('fry')+1
+			act_matrix[actindx, :][fry_ti] = 1
+			act_number_per_act_type[actindx, :][fry_ti] = 1
 
-		for bathi in bath_times[0:bath_freq]: # loop through times
+		for bathi in bath_times[0:bath_freqs[0]]: # loop through times
 			bath_ti = (all_times_hr >= bathi)*(all_times_hr < bathi+bath_dur)
-			act_matrix[3, :][bath_ti] = 1
+			actindx = act_matrix_act_order.index('sho')+1
+			act_matrix[actindx, :][bath_ti] = 1
+			act_number_per_act_type[actindx, :][bath_ti] = 1
 
-		for pcpi in pcp_times[0:pcp_freq]: # loop through times
+		for pcpi in pcp_times[0:pcp_freqs[0]]: # loop through times
 			pcp_ti = (all_times_hr >= pcpi)*(all_times_hr < pcpi+pcp_dur)
-			act_matrix[4, :][pcp_ti] = 1
+			actindx = act_matrix_act_order.index('pcp')+1
+			act_matrix[actindx, :][pcp_ti] = 1
+			act_number_per_act_type[actindx, :][pcp_ti] = 1
 
-		for wbsi in wbs_times[0:wbs_freq]: # loop through times
+		for wbsi in wbs_times[0:wbs_freqs[0]]: # loop through times
 			wbs_ti = (all_times_hr >= wbsi)*(all_times_hr < wbsi+wbs_dur)
-			act_matrix[5, :][wbs_ti] = 1
+			actindx = act_matrix_act_order.index('wst')+1
+			act_matrix[actindx, :][wbs_ti] = 1
+			act_number_per_act_type[actindx, :][wbs_ti] = 1
 
 		for vaci in vac_times[0:vac_freqs[0]]: # loop through times
 			vac_ti = (all_times_hr >= vaci)*(all_times_hr < vaci+vac_dur)
-			act_matrix[6, :][vac_ti] = 1
+			actindx = act_matrix_act_order.index('vac')+1
+			act_matrix[actindx, :][vac_ti] = 1
+			act_number_per_act_type[actindx, :][vac_ti] = 1
 
 		for clsi in cls_times[0:cls_freqs[0]]: # loop through times
 			cls_ti = (all_times_hr >= clsi)*(all_times_hr < clsi+cls_dur)
-			act_matrix[7, :][cls_ti] = 1
+			actindx = act_matrix_act_order.index('cls')+1
+			act_matrix[actindx, :][cls_ti] = 1
+			act_number_per_act_type[actindx, :][cls_ti] = 1
 
-		for fragi in frag_times[0:frag_freqs[0]]: # loop through times
-			frag_ti = (all_times_hr >= fragi)*(all_times_hr < fragi+frag_dur)
-			act_matrix[8, :][frag_ti] = 1
+		for freshi in fresh_times[0:fresh_freqs[0]]: # loop through times
+			fresh_ti = (all_times_hr >= freshi)*(all_times_hr < freshi+fresh_dur)
+			actindx = act_matrix_act_order.index('fresh')+1
+			act_matrix[actindx, :][fresh_ti] = 1
+			act_number_per_act_type[actindx, :][fresh_ti] = 1
 
 		for smoi in smo_times[0:smo_freqs[0]]: # loop through times
 			smo_ti = (all_times_hr >= smoi)*(all_times_hr < smoi+smo_dur)
-			act_matrix[9, :][smo_ti] = 1
-		
+			actindx = act_matrix_act_order.index('smo')+1
+			act_matrix[actindx, :][smo_ti] = 1
+			act_number_per_act_type[actindx, :][smo_ti] = 1
+
 		for candi in cand_times[0:cand_freqs[0]]: # loop through times
 			cand_ti = (all_times_hr >= candi)*(all_times_hr < candi+cand_dur)
-			act_matrix[10, :][cand_ti] = 1
+			actindx = act_matrix_act_order.index('cand')+1
+			act_matrix[actindx, :][cand_ti] = 1
+			act_number_per_act_type[actindx, :][cand_ti] = cand_num
+
+		for fcandi in fcand_times[0:fcand_freqs[0]]: # loop through times for flickering candle
+			fcand_ti = (all_times_hr >= fcandi)*(all_times_hr < fcandi+fcand_dur)
+			actindx = act_matrix_act_order.index('fcand')+1
+			act_matrix[actindx, :][fcand_ti] = 1
+			act_number_per_act_type[actindx, :][fcand_ti] = fcand_num
+
+		for gasfi in gasf_times[0:gasf_freqs[0]]: # loop through times
+			gasf_ti = (all_times_hr >= gasfi)*(all_times_hr < gasfi+gasf_dur)
+			actindx = act_matrix_act_order.index('gasf')+1
+			act_matrix[actindx, :][gasf_ti] = 1
+			act_number_per_act_type[actindx, :][gasf_ti] = 1
+
+		# convert from list to array
+		act_matrix_act_order = np.array((act_matrix_act_order))
 
 		# file name
 		outd_dir_name = str('outprep_' + oci)
@@ -593,7 +693,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# component names from outdoor concentration run
 		load_path = str(outd_dir + '/comp_namelist.npy') # path
 		comp_names = (np.load(load_path, allow_pickle=True)).tolist()
-
+		
 		# component molar masses (g/mol)
 		load_path = str(outd_dir + '/y_mw.npy') # path
 		y_MM = np.load(load_path, allow_pickle=True)
@@ -643,10 +743,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# outdoor particle radii (um)
 		fname = str(outd_dir + '/size_bin_radius')
 		# skiprows=1 omits header
-		x = np.loadtxt(fname, delimiter=',', skiprows=1)
+		x0 = np.loadtxt(fname, delimiter=',', skiprows=1)
 
 		# withdraw concentrations (ppb in gas, 
-		# # molecules/cm3 in particle and wall)
+		# # molecules/cm^3 in particle and wall)
 		fname = str(outd_dir + 
 		'/nudged_concentrations_all_components_all_times_gas_particle_wall')
 		y = np.loadtxt(fname, delimiter=',', skiprows=1)
@@ -660,26 +760,54 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			y[:, nc::] = 0.
 
 		# get number of particle size bins outdoors
-		nsb = int(x.shape[1])
+		nsb = int(x0.shape[1])
 
+		# withdraw number-size distributions (# particles/cm^3 (air))
+		fname = str(outd_dir + '/particle_number_concentration_wet')
+		Nwet = np.loadtxt(fname, delimiter=',', skiprows=1)
+		if (nsb == 1): # if just one size bin, ensure two dimensions
+			Nwet = Nwet.reshape(-1, 1)
+
+		# if we want to zero outdoor particle concentrations, then do this here
+		# for particle number concentration
+		if (without_outdoor_particle_flag == 1):
+			Nwet[:, :] = 0.
+		
 		# if user wants more size bins than was present in outdoor simulation,
 		# create dummy entries for additional size bins for outdoors
 		if (nsb_user > nsb):
-		
+			
 			# isolate particle-phase concentrations
 			yp = y[:, nc::]
 
-			for exi in range(nsb_user-nsb):
-				# dummy radius of particles
-				x = np.concatenate((np.zeros((x.shape[0], 1)), x), axis=1)
-				# dummy component concentrations
-				yp = np.concatenate((np.zeros((yp.shape[0], nc)), yp), axis=1)
+			# prepare to hold reallocated outdoor particle radii (um)
+			x = np.zeros((x0.shape[0], nsb_user))
+			# prepare to hold reallocated outdoor particle number 
+			# concentration (particles/cm^3)
+			Nwetn = np.zeros((x0.shape[0], nsb_user))
+			# prepare to hold reallocated particle-phase 
+			# concentrations (molecules/cm^3)
+			ypn = np.zeros((y.shape[0], nsb_user*nc))
+
+			for exi in range(nsb):
+				# loop through times of outdoor simulation
+				for ti in range(x0.shape[0]):
+					# get relevant size bin index now
+					sbni = sum(x0[ti, exi]>lps)-1
+					x[ti, sbni] = x0[ti, exi]
+					Nwetn[ti, sbni] = Nwet[ti, exi]
+					ypn[ti, nc*sbni:nc*(sbni+1)] = yp[ti, nc*exi:nc*(exi+1)]
 
 			# concatenate updated particle phases to gas-phase
-			y = np.concatenate((y[:, 0:nc], yp), axis=1)
+			y = np.concatenate((y[:, 0:nc], ypn), axis=1)
 
-			# update number of size bins
+			Nwet = Nwetn # reset name, ready for further use
+
+			# update number of size bins for outdoor particles
 			nsb = nsb_user
+
+		else:
+			x = x0
 
 		# in case you want to see SOPM mass fraction outdoors
 		# prepare array for holding indices of SOPM components
@@ -700,13 +828,14 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# get particle-phase mole fractions of outdoor components 
 		# at all times per size bin and ensure they sum to 1
 		for i in range(0, nsb):
-
-			# if this size bin is empty
-			if (np.sum(np.sum(y[:, nc0*(i+1):nc0*(i+2)], axis=1)) == 0):
-				seedx_out[:, nc0*i:nc0*(i+1)] = 0.
-			else:
-				seedx_out[:, nc0*i:nc0*(i+1)] = y[:, nc0*(i+1):nc0*(i+2)]/(
-				np.sum(y[:, nc0*(i+1):nc0*(i+2)], axis=1).reshape(-1, 1))
+				# loop through times
+				for ti in range(y.shape[0]):
+					# if this size bin is empty
+					if (np.sum(y[ti, nc0*(i+1):nc0*(i+2)]) == 0):
+						seedx_out[ti, nc0*i:nc0*(i+1)] = 0.
+					else:
+						seedx_out[ti, nc0*i:nc0*(i+1)] = y[ti, nc0*(i+1):nc0*(i+2)]/(
+						np.sum(y[ti, nc0*(i+1):nc0*(i+2)]))
 			
 			# in case you want to see SOPM mass fraction outdoors
 			# estimate and print out the mass fraction of outdoor PM2.5
@@ -736,26 +865,6 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# zero the concentration of H2O, as this set inside PyCHAM
 		# based on the RH model variables
 		y_g[:, comp_names.index('H2O')] = 0.
-
-		# withdraw number-size distributions (# particles/cm3 (air))
-		fname = str(outd_dir + '/particle_number_concentration_wet')
-		Nwet = np.loadtxt(fname, delimiter=',', skiprows=1)
-		if (nsb == 1): # if just one size bin, ensure two dimensions
-			Nwet = Nwet.reshape(-1, 1)
-
-		# if we want to zero outdoor particle concentrations, then do this here
-		# for particle number concentration
-		if (without_outdoor_particle_flag == 1):
-			Nwet[:, :] = 0.
-		
-		# if user wants more size bins than was present in outdoor simulation,
-		# create dummy entries for additional size bins for outdoors
-		if (x.shape[1] > Nwet.shape[1]):
-
-			for exi in range(x.shape[1]-Nwet.shape[1]):
-				# dummy particle number concentration
-				Nwet = np.concatenate((np.zeros((Nwet.shape[0], 1)), Nwet),
-					axis=1)
 		
 		# generate an array with air change rates aligned with
 		# outdoor concentration times (/s)
@@ -859,6 +968,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					if 'POT_NIT' in ind_compi:
 						y_dens_ind.append(2.11)
 						y_MM_ind.append(101.1)
+					
+					if 'bcin' in ind_compi:
+						y_dens_ind.append(2.26) # density of graphite
+						y_MM_ind.append(12.01)
 					
 					prop_list.append(ind_compi)
 
@@ -1017,7 +1130,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		# prepare to hold total (summed across components) 
 		# particle-phase molecular concentration 
 		# influxed from 
-		# indoor activities (molecules/cm3/s), size bins in rows,
+		# indoor activities (molecules/cm^3/s), size bins in rows,
 		# activities in columns
 		tot_pp_in = np.zeros((nsb, ind_emi_val.shape[1]))
 
@@ -1026,7 +1139,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		tot_v_out_sbi = np.zeros((len(t_array), nsb))
 
 		# prepare to hold volumes of particles from indoors
-		# per activity and per size bin (um3)
+		# per size bin (rows), per per activity (columns) (um3)
 		tot_v_in_sbi = np.zeros((nsb, ind_emi_val.shape[1]))
 
 		# prepare to store particle number concentration
@@ -1035,7 +1148,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		Nwet_out_store = np.zeros((len(t_array), nsb))
 
 		# prepare to store particle number concentration influxed from
-		# indoor activities in this size bin (particles/cm3/s)
+		# indoor activities in this size bin (particles/cm^3/s)
 		# with size bins in rows and activities in columns
 		ind_N_sbi_store = np.zeros((nsb, ind_emi_val.shape[1]))
 
@@ -1097,7 +1210,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					ind_emi_val[
 					ind_emi_comp_names.tolist().index(
 					ind_comp_now), :])).reshape(1, -1)
-
+			
 			# fill in later size bins of continuous influx array 
 			# index for outdoor and indoor particle-phase 
 			# components, pconc and mean_rad, add +2 to allow 
@@ -1124,7 +1237,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			# indices of where abundances are greater than 0
 			pos_indx = ind_emi_sbi_sum[0, :]>0.
 
-			# sum mole fractions to 1 per activity
+			# sum mole fractions to 1 per activity in this size bin
 			ind_emi_sbi[:, pos_indx] = ind_emi_sbi[
 			:, pos_indx]/ind_emi_sbi_sum[0, pos_indx]
 
@@ -1134,8 +1247,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				ind_emi_all_sb = np.zeros((ind_emi_sbi.shape[0], 
 					ind_emi_sbi.shape[1], nsb))
 
-			# record mole fractions for this size bin
-			ind_emi_all_sb[:, :, sbi] = ind_emi_sbi
+			# record mole fractions for this size bin, note components 
+			# in rows, activities in columns and size bin in third 
+			# dimension
+			ind_emi_all_sb[:, :, sbi] = ind_emi_sbi[:, :]
 			
 			# label particle components with particle size bin
 			# number
@@ -1190,7 +1305,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			ind_N_sbi = ind_N_sbi.reshape(1, -1)
 
 			# store particle number concentration influxed from
-			# indoor activities in this size bin (particles/cm3/s)
+			# indoor activities in this size bin (particles/cm^3/s)
 			# with size bins in rows and activities in columns
 			ind_N_sbi_store[sbi, :] = ind_N_sbi
 
@@ -1199,9 +1314,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			tot_v_out_sbi[:, sbi] = ((4./3.)*np.pi*(x_out**3.*Nwet_out))[:, 0]
 			
 			# total indoor volume of influxed particles in this size bin
-			# um3/s, activites in columns
-			tot_v_in_sbi[sbi, :] = (4./3.)*np.pi*(ind_x_sbi**3.*ind_N_sbi)
-
+			# um^3/s, activites in columns
+			tot_v_in_sbi[sbi, :] = ((4./3.)*np.pi*(ind_x_sbi**3.)*ind_N_sbi*
+						   np.max(act_number_per_act_type[1::, :], axis=1))
+			
 			# outdoor seed component mole fractions 
 			# in this size bin at all times
 			seedx_out_sbi = seedx_out[:, nc0*sbi:nc0*(sbi+1)]
@@ -1252,12 +1368,10 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 			# total (summed across components) particle-phase molecular 
 			# concentration influx from each
-			# indoor activities (molecules/cm3/s), size bins in rows,
+			# indoor activity (molecules/cm^3/s), size bins in rows,
 			# activities in columns
 			tot_pp_in[sbi, pos_indx] = (tot_v_in_sbi[sbi, pos_indx]/
 				in_MV[pos_indx].reshape(1, -1))
-
-	
 
 		# ensure integer
 		seedx_indx = seedx_indx.astype('int')
@@ -1309,12 +1423,13 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 		octi = 0
 		# keep count on activity times
 		actti = 0
-
+		
 		# loop through times
 		for ti in range(cont_infl.shape[1]):
 
 			# if not already at final activity time
 			if (actti+1 < len(act_matrix[0, :])):
+				# keep count on index of activity times
 				if (cont_infl[0, ti] == act_matrix[0, :][actti+1]):
 					actti += 1
 		
@@ -1345,12 +1460,17 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 			all_ind_act_indx = []
 			
 			# loop through activities happening now to get continuous
-			# influx of gases from indoor activities (molecules/cm3/s)
+			# influx of gases from indoor activities (molecules/cm^3/s)
 			for acti in act_types_now:
 
-				# indices of activities happening now
+				# indices of activity happening now
 				act_indx = comp_inf_col_head.index(acti)
 
+				# number of this activity happening now
+				# (e.g. two candles burning has a value of 2)
+				act_number_now = act_number_per_act_type[
+					1+act_matrix_act_order.tolist().index(acti), actti]
+				
 				# store indicies of activities happening now
 				all_ind_act_indx.append(act_indx)
 	
@@ -1360,7 +1480,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				# envelope being emitted into (cm^3) and therefore diluted
 				# by, converts units from molecules/s to molecules/cm^3/s
 				cont_infl[1::, ti][ind_comp_indx] += ind_emi_val[
-					ind_emi_val_g_indx, act_indx]/env_vol
+					ind_emi_val_g_indx, act_indx]/env_vol*act_number_now
 
 			# particle-phase calculation for cont_infl starts ------------
 
@@ -1375,23 +1495,28 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 
 				# prepare to hold total (summed across activities) particle 
 				# number concentration
-				# from indoor activities in this size bin now (particles/cm3/s)
+				# from indoor activities in this size bin now (particles/cm^3/s)
 				ind_N_sbi_now = 0
 
 				# loop through activities happening now
 				for acti in act_types_now:
 			
+					# number of this activity happening now
+					# (e.g. two candles burning has a value of 2)
+					act_number_now = act_number_per_act_type[
+						1+act_matrix_act_order.tolist().index(acti), actti]
+
 					# hold total (summed across activities) particle 
 					# number concentration
 					# from indoor activities in this size bin 
-					# now (particles/cm3/s)
+					# now (particles/cm^3/s)
 					ind_N_sbi_now += ind_N_sbi_store[
-					sbi, comp_inf_col_head.index(acti)]
+					sbi, comp_inf_col_head.index(acti)]*act_number_now
 
 				
 					# total particle-phase molecular concentration 
 					# influx from this 
-					# indoor activity in this size bin (molecules/cm3/s)
+					# indoor activity in this size bin (molecules/cm^3/s)
 					# appended to influxes from outdoors and other
 					# indoor sources
 					tot_mol_inf_now = np.concatenate((tot_mol_inf_now, 
@@ -1401,7 +1526,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				# sum (summed across outdoor influx and 
 				# indoor activities) of all particle-phase 
 				# molecular concentration 
-				# influxes now (molecules/cm3/s)
+				# influxes now (molecules/cm^3/s)
 				sum_tot_mol_inf_now = np.sum(tot_mol_inf_now, axis=0)
 
 				# mole fractions of particle-phase component from outdoors
@@ -1414,7 +1539,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 				# indoor sources (sources in columns)
 				mf_pp_in = (tot_pp_in[sbi, all_ind_act_indx]/
 					sum_tot_mol_inf_now).reshape(1, -1)
-
+				
 				# outdoor individual seed component mole fractions 
 				# in this size bin at this time
 				seedx_out_sbi = (seedx_out[octi, nc0*sbi:nc0*(sbi+1)].reshape(
@@ -1489,7 +1614,7 @@ def mod_var_setup(path_there, chem_sch_name, xml_name, res_path, base_path,
 					seedx_ind_sbi, axis=1))
 
 				# sum of influxing particle number concentration from
-				# outdoors and indoors (particles/cm3/s) in this size bin
+				# outdoors and indoors (particles/cm^3/s) in this size bin
 				# at this time
 				pconc_sum = Nwet_out_store[octi, sbi]+ind_N_sbi_now
 

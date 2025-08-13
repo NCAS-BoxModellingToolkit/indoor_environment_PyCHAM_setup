@@ -51,6 +51,9 @@
 <species species_number="s1" species_name="POT_NIT_ind">
 <smiles>[K+].[O-][N+]([O-])=O</smiles>
 </species>
+<species species_number="s1" species_name="POT_NIT">
+<smiles>[K+].[O-][N+]([O-])=O</smiles>
+</species>
 <species species_number="s1" species_name="ALLYLAMINE">
 <smiles>C=CCN</smiles>
 </species>
